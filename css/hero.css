@@ -1,0 +1,400 @@
+/* ============================================================
+   Atlas Integrated — Hero
+   Cinematic intro, hand-built 3D wireframe globe with axial tilt,
+   orbital system, responsive behavior, reduced-motion overrides.
+   ============================================================ */
+
+.hero {
+  position: relative;
+  height: min(100vh, 860px);
+  height: min(100dvh, 860px);
+  min-height: 620px;
+  display: flex;
+  align-items: center;
+  padding-top: var(--space-8);
+  padding-bottom: var(--space-6);
+  overflow: hidden;
+}
+
+.hero-inner {
+  width: 100%;
+  max-width: var(--container-xl);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+  display: grid;
+  grid-template-columns: 1fr;
+  align-items: center;
+  gap: var(--space-6);
+}
+
+@media (min-width: 1024px) {
+  .hero-inner {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: var(--space-7);
+  }
+}
+
+/* ---- Hero text ---- */
+
+.hero-text {
+  position: relative;
+  z-index: var(--z-hero-text);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--space-5);
+  max-width: 640px;
+  justify-self: center;
+}
+
+@media (min-width: 1024px) {
+  /* Hero text starts visually centered on the viewport (over the globe)
+     and slides to the LEFT to its final centered-in-left-column position. */
+  .hero-text {
+    transform: translateX(25vw);
+    animation: hero-text-slide var(--dur-intro) var(--ease-cinematic) var(--intro-hold) forwards;
+  }
+}
+
+@keyframes hero-text-slide {
+  to { transform: translateX(0); }
+}
+
+.hero-headline,
+.subhead-line,
+.hero-cta {
+  opacity: 0;
+  animation: hero-text-enter var(--dur-reveal) var(--ease-cinematic) forwards;
+}
+
+.hero-headline {
+  font-family: var(--font-display);
+  font-size: var(--fs-display-xl);
+  font-weight: var(--fw-semi);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--tracking-display-tight);
+  color: var(--fg-body);
+  margin: 0;
+  animation-delay: 800ms;
+}
+
+.hero-subhead {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  max-width: 38ch;
+}
+
+.subhead-line {
+  display: block;
+  font-family: var(--font-display);
+  letter-spacing: var(--tracking-display);
+  color: var(--fg-body);
+}
+
+.subhead-line-1,
+.subhead-line-2 {
+  font-size: clamp(1.5rem, 2.8vw, 2rem);
+  font-weight: var(--fw-regular);
+  line-height: var(--lh-snug);
+}
+
+.subhead-line-1 {
+  animation-delay: 1400ms;
+}
+
+.subhead-line-2 {
+  color: var(--fg-muted);
+  animation-delay: 1900ms;
+}
+
+.hero-cta {
+  margin-top: var(--space-4);
+  animation-delay: 2400ms;
+}
+
+@keyframes hero-text-enter {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ---- Hero globe wrapper ---- */
+
+.hero-globe {
+  position: relative;
+  width: min(64vw, 58vh);
+  aspect-ratio: 1 / 1;
+  margin-inline: auto;
+  container-type: inline-size;
+  overflow: visible;
+}
+
+@media (min-width: 1024px) {
+  .hero-globe {
+    width: min(36vw, 60vh);
+    /* Globe starts visually centered on the viewport (shifted left from
+       its grid cell position), then slides to its final position. */
+    transform: translateX(-25vw);
+    animation: hero-globe-slide var(--dur-intro) var(--ease-cinematic) var(--intro-hold) forwards;
+  }
+}
+
+@keyframes hero-globe-slide {
+  to { transform: translateX(0); }
+}
+
+/* ---- The 3D globe scene ---- */
+
+.globe {
+  position: absolute;
+  inset: 0;
+  perspective: 1800px;
+  perspective-origin: 50% 45%;
+  color: var(--stroke-globe);
+}
+
+/* Static layer: outline circle + parallels (pre-foreshortened for the axial tilt) */
+.globe-static {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.globe-edge {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: var(--stroke-edge);
+  vector-effect: non-scaling-stroke;
+}
+
+.globe-parallels ellipse {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: var(--stroke-parallel);
+  vector-effect: non-scaling-stroke;
+  opacity: 0.75;
+}
+
+/* Meridians are SVG paths drawn directly in 2D screen space.
+   JavaScript updates their `d` attribute on each frame to simulate
+   3D rotation of a sphere viewed orthographically. The benefit:
+   strokes never get thinned by CSS 3D foreshortening, so the
+   edge-on meridian (the vertical line down the center) stays at
+   full thickness. */
+
+.meridian {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: var(--stroke-meridian);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  opacity: 1;
+}
+
+/* Orbit-path strokes are intentionally hidden — we no longer draw them.
+   The icons orbit on an invisible shared path so the visual is just the
+   constellation of icons sweeping around the globe. */
+
+/* ---- Orbital integration constellation around the globe ----
+ * Hidden under 1024px (per spec: capabilities live in the grid below).
+ * The .integrations parent rotates slowly, sweeping all integrations
+ * around the globe together. Each .integration counter-rotates so its
+ * content stays upright. Hover on any icon pauses everything.
+ */
+
+.integrations {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  transform-origin: center;
+  animation: integrations-orbit 90s var(--ease-linear) infinite;
+}
+
+@media (max-width: 1023px) {
+  .integrations {
+    display: none;
+  }
+}
+
+.integration {
+  position: absolute;
+  top: var(--y, 50%);
+  left: var(--x, 50%);
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  opacity: 1;
+  transform-origin: center;
+  animation:
+    integration-fade-in 600ms var(--ease-cinematic) var(--entry-delay, 2400ms) backwards,
+    integration-counter 90s var(--ease-linear) infinite;
+}
+
+.integrations:has(.integration-button:hover),
+.integrations:has(.integration-button:focus-visible) {
+  animation-play-state: paused;
+}
+.integrations:has(.integration-button:hover) .integration,
+.integrations:has(.integration-button:focus-visible) .integration {
+  animation-play-state: paused;
+}
+
+@keyframes integrations-orbit {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes integration-counter {
+  to { transform: rotate(-360deg); }
+}
+
+.integration-button {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform: translate(-50%, -50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  background: var(--bg-page);
+  border: 1.5px solid var(--color-border-strong);
+  border-radius: var(--radius-pill);
+  color: var(--stroke-globe);
+  cursor: pointer;
+  pointer-events: auto;
+  transition:
+    transform 200ms var(--ease-card),
+    border-color 200ms var(--ease-smooth),
+    color 200ms var(--ease-smooth),
+    background 200ms var(--ease-smooth);
+}
+.integration-button svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+}
+.integration-button:hover,
+.integration-button:focus-visible {
+  transform: translate(-50%, -50%) scale(1.08);
+  border-color: var(--color-navy);
+  background: var(--color-navy);
+  color: var(--color-surface);
+}
+
+/* AI Inbox is no longer special — all integrations look the same. */
+
+.integration-label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  /* Always centered horizontally on the icon, fixed offset below */
+  transform: translate(-50%, 28px);
+  font-family: var(--font-body);
+  font-size: var(--fs-caption);
+  font-weight: var(--fw-medium);
+  color: var(--fg-body);
+  letter-spacing: var(--tracking-caption);
+  line-height: 1.25;
+  pointer-events: none;
+  text-transform: uppercase;
+  text-align: center;
+  /* Allow wrap onto multiple lines for long capability names (e.g.
+     "Native Pitchbook Integration", "Buyers List Generation") so they
+     don't overlap adjacent orbits or the globe outline. */
+  white-space: normal;
+  width: 130px;
+}
+
+
+@keyframes integration-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ---- Mobile and tablet adjustments ---- */
+
+@media (max-width: 1023px) {
+  .hero {
+    padding-top: var(--space-9);
+    padding-bottom: var(--space-8);
+    height: auto;
+    min-height: auto;
+  }
+
+  .hero-inner {
+    grid-template-columns: 1fr;
+    gap: var(--space-6);
+  }
+
+  .hero-text {
+    align-items: center;
+    text-align: center;
+    margin-inline: auto;
+  }
+
+  .hero-subhead { max-width: 30ch; }
+
+  .hero-headline,
+  .hero-subhead,
+  .hero-cta {
+    transform: translateY(16px);
+    animation-name: hero-text-enter-mobile;
+  }
+
+  .hero-globe {
+    order: -1;
+    width: clamp(280px, 80vw, 520px);
+  }
+}
+
+@keyframes hero-text-enter-mobile {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 767px) {
+  .hero-globe {
+    width: clamp(280px, 90vw, 420px);
+  }
+
+  /* Pause orbits on small mobile for battery; globe rotor still spins */
+  .orbit-node {
+    animation:
+      orbit-travel var(--period) var(--ease-linear) infinite paused,
+      orbit-fade-in var(--dur-reveal) var(--ease-cinematic) forwards;
+  }
+
+  .node-label { display: none; }
+
+  .hero-headline {
+    font-size: clamp(3rem, 14vw, 4.5rem);
+  }
+}
+
+/* ---- Reduced motion: collapse animations to instant final state ---- */
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-headline,
+  .subhead-line,
+  .hero-cta,
+  .integration {
+    animation: none !important;
+    transition: none !important;
+    opacity: 1;
+  }
+  /* Note: do NOT set transform: none on .integration here — its transform
+     is positioning, not animation. Same for .hero-headline etc. which now
+     use transform: none as the rule's resting state. */
+  /* Meridian rotation is JS-driven; the JS checks prefers-reduced-motion. */
+}

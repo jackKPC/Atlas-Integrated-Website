@@ -1,0 +1,832 @@
+/* ============================================================
+   Atlas Integrated — Sections (M2+)
+   Shared section primitives, scroll reveals, two-column splits
+   ============================================================ */
+
+.section {
+  position: relative;
+  padding-block: var(--space-10);
+}
+
+@media (max-width: 1023px) {
+  .section { padding-block: var(--space-9); }
+}
+
+@media (max-width: 767px) {
+  .section { padding-block: var(--space-8); }
+}
+
+/* Subtle hairline separator above each major section (matches Anthropic-style restraint) */
+.section-divider {
+  border-top: 1px solid var(--color-border);
+}
+
+.section-eyebrow {
+  display: inline-block;
+  font-family: var(--font-body);
+  font-size: var(--fs-caption);
+  font-weight: var(--fw-medium);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-eyebrow);
+  color: var(--color-gold);
+  margin-bottom: var(--space-5);
+}
+
+.section-headline {
+  font-family: var(--font-display);
+  font-size: clamp(2.25rem, 4.2vw, 3.75rem);
+  font-weight: var(--fw-semi);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--tracking-display-tight);
+  color: var(--fg-body);
+  margin-bottom: var(--space-5);
+  max-width: 22ch;
+}
+
+.section-lede {
+  font-family: var(--font-display);
+  font-size: clamp(1.25rem, 1.9vw, 1.5rem);
+  font-weight: var(--fw-regular);
+  line-height: var(--lh-snug);
+  letter-spacing: var(--tracking-display);
+  color: var(--fg-muted);
+  max-width: 38ch;
+}
+
+.section-body {
+  font-family: var(--font-body);
+  font-size: var(--fs-body-lg);
+  line-height: var(--lh-body);
+  color: var(--fg-body);
+  max-width: 52ch;
+}
+
+.section-body + .section-body {
+  margin-top: var(--space-4);
+}
+
+/* ---- Two-column split (text left, visual right) ---- */
+
+.split-2 {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-7);
+  align-items: center;
+}
+
+@media (min-width: 1024px) {
+  .split-2 {
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1fr);
+    gap: var(--space-9);
+  }
+}
+
+.split-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.split-visual {
+  position: relative;
+  width: 100%;
+}
+
+/* Scroll reveals intentionally disabled.
+   Only the hero has motion animations; the rest of the page is static. */
+[data-reveal] {
+  opacity: 1;
+  transform: none;
+}
+
+/* ---- Section 2: Platform Statement ---- */
+
+.section-platform {
+  /* Spec: a single, wide section establishing the category and the problem.
+     No icons in colored circles. No bullet lists. Copy and structure carry the weight. */
+}
+
+/* The Atlas AI flow diagram (custom SVG) */
+.workflow-diagram {
+  width: 100%;
+  max-width: 700px;
+  margin-inline: auto;
+  display: block;
+  color: var(--color-navy);
+}
+
+.workflow-diagram .wf-card {
+  fill: var(--bg-page);
+  stroke: currentColor;
+  stroke-width: 1.5;
+}
+
+.workflow-diagram .wf-card-strong {
+  stroke-width: 2;
+}
+
+.workflow-diagram .wf-card-label {
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: var(--fw-medium);
+  fill: var(--color-navy);
+  letter-spacing: 0.02em;
+}
+
+.workflow-diagram .wf-card-title {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: var(--fw-semi);
+  fill: var(--color-navy);
+  letter-spacing: -0.01em;
+}
+
+.workflow-diagram .wf-flow {
+  fill: none;
+  stroke: var(--color-muted);
+  stroke-width: 1.4;
+  stroke-linecap: round;
+}
+
+.workflow-diagram .wf-icon {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ============================================================
+   Section 4: Capabilities
+   ============================================================ */
+
+.section-capabilities {
+  /* spacing handled by .section */
+}
+
+.section-header {
+  text-align: center;
+  max-width: 760px;
+  margin-inline: auto;
+  margin-bottom: var(--space-9);
+}
+
+.section-header .section-headline {
+  max-width: 22ch;
+  margin-inline: auto;
+}
+
+.section-header .section-lede {
+  max-width: 48ch;
+  margin-inline: auto;
+}
+
+/* ---- Featured capability spotlight (AI Inbox) ---- */
+
+.capability-feature {
+  position: relative;
+  background: var(--color-navy);
+  color: var(--color-surface);
+  border-radius: var(--radius-lg);
+  padding: var(--space-9) var(--space-8);
+  margin-bottom: var(--space-9);
+  overflow: hidden;
+}
+
+@media (max-width: 767px) {
+  .capability-feature {
+    padding: var(--space-7) var(--space-6);
+  }
+}
+
+.feature-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-7);
+  align-items: start;
+  position: relative;
+  z-index: 1;
+}
+
+@media (min-width: 1024px) {
+  .feature-grid {
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+    gap: var(--space-9);
+  }
+}
+
+.feature-icon {
+  width: 48px;
+  height: 48px;
+  color: var(--color-gold);
+  margin-bottom: var(--space-5);
+}
+
+.feature-eyebrow {
+  display: block;
+  font-family: var(--font-body);
+  font-size: var(--fs-caption);
+  font-weight: var(--fw-medium);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-eyebrow);
+  color: var(--color-gold);
+  margin-bottom: var(--space-4);
+}
+
+.feature-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.875rem, 3vw, 2.5rem);
+  font-weight: var(--fw-semi);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--tracking-display-tight);
+  color: var(--color-surface);
+  margin-bottom: var(--space-4);
+  max-width: 22ch;
+}
+
+.feature-body {
+  font-family: var(--font-body);
+  font-size: var(--fs-body-lg);
+  line-height: var(--lh-body);
+  color: var(--color-surface);
+  opacity: 0.85;
+  max-width: 50ch;
+}
+
+.feature-body + .feature-body {
+  margin-top: var(--space-4);
+}
+
+/* The secondary slogan, rendered as a display-type declaration (not a callout) */
+.feature-slogan {
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, 2.4vw, 2rem);
+  font-weight: var(--fw-regular);
+  line-height: var(--lh-snug);
+  letter-spacing: var(--tracking-display);
+  color: var(--color-surface);
+  border-top: 1px solid rgba(247, 244, 236, 0.18);
+  padding-top: var(--space-6);
+  margin-top: var(--space-6);
+  max-width: 24ch;
+}
+
+/* ---- Capabilities grid (9 cards) ---- */
+
+.capability-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-4);
+}
+
+@media (min-width: 640px) {
+  .capability-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .capability-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.capability-card {
+  position: relative;
+  background: var(--bg-page);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-6);
+  transition:
+    transform 180ms var(--ease-card),
+    border-color 200ms var(--ease-smooth),
+    box-shadow 200ms var(--ease-smooth);
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  cursor: default;
+}
+
+.capability-card:hover,
+.capability-card:focus-within {
+  transform: translateY(-2px);
+  border-color: var(--color-border-strong);
+  box-shadow: 0 8px 24px rgba(31, 51, 86, 0.08);
+}
+
+.capability-card-icon {
+  width: 32px;
+  height: 32px;
+  color: var(--color-navy);
+  margin-bottom: var(--space-4);
+}
+
+.capability-card-name {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: var(--fw-semi);
+  line-height: var(--lh-snug);
+  letter-spacing: var(--tracking-display);
+  color: var(--color-navy);
+  margin-bottom: var(--space-3);
+}
+
+.capability-card-statement {
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--fg-body);
+  margin: 0;
+}
+
+.capability-card-detail {
+  font-family: var(--font-body);
+  font-size: var(--fs-body-sm);
+  line-height: var(--lh-body);
+  color: var(--fg-muted);
+  margin: 0;
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition:
+    max-height 280ms var(--ease-card),
+    opacity 200ms var(--ease-card),
+    margin-top 280ms var(--ease-card);
+}
+
+.capability-card:hover .capability-card-detail,
+.capability-card:focus-within .capability-card-detail {
+  max-height: 120px;
+  opacity: 1;
+  margin-top: var(--space-3);
+}
+
+/* ============================================================
+   Section 5: Built Different
+   ============================================================ */
+
+.differentiator-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-7);
+  max-width: 1080px;
+  margin-inline: auto;
+}
+
+@media (min-width: 768px) {
+  .differentiator-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-8) var(--space-9);
+  }
+}
+
+.differentiator {
+  position: relative;
+  padding-left: var(--space-6);
+  border-left: 1px solid var(--color-border-strong);
+}
+
+.differentiator-number {
+  display: block;
+  font-family: var(--font-body);
+  font-size: var(--fs-caption);
+  font-weight: var(--fw-semi);
+  letter-spacing: var(--tracking-eyebrow);
+  color: var(--color-gold);
+  margin-bottom: var(--space-3);
+}
+
+.differentiator-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.375rem, 2vw, 1.75rem);
+  font-weight: var(--fw-semi);
+  line-height: var(--lh-snug);
+  letter-spacing: var(--tracking-display);
+  color: var(--color-navy);
+  margin-bottom: var(--space-3);
+  max-width: 20ch;
+}
+
+.differentiator-body {
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--fg-body);
+  max-width: 42ch;
+  margin: 0;
+}
+
+/* ============================================================
+   Section 7: Book a Demo
+   Navy full-width section with a substantial form card
+   ============================================================ */
+
+.section-demo {
+  position: relative;
+  background: var(--color-navy);
+  color: var(--color-surface);
+  padding-block: var(--space-10);
+  scroll-margin-top: 80px;
+  overflow: hidden;
+}
+
+@media (max-width: 767px) {
+  .section-demo { padding-block: var(--space-9) var(--space-8); }
+}
+
+/* Soft gold radial glow in the background for depth */
+.section-demo::before {
+  content: "";
+  position: absolute;
+  top: -30%;
+  left: 50%;
+  width: 900px;
+  height: 900px;
+  transform: translateX(-50%);
+  background: radial-gradient(circle at center, oklch(70% 0.10 80 / 0.10) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.demo-inner {
+  position: relative;
+  max-width: 640px;
+  margin-inline: auto;
+  text-align: center;
+  z-index: 1;
+}
+
+.demo-eyebrow {
+  display: inline-block;
+  font-family: var(--font-body);
+  font-size: var(--fs-caption);
+  font-weight: var(--fw-semi);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-eyebrow);
+  color: var(--color-gold);
+  margin-bottom: var(--space-4);
+}
+
+.demo-headline {
+  font-family: var(--font-display);
+  font-size: clamp(2.25rem, 4.2vw, 3.5rem);
+  font-weight: var(--fw-semi);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--tracking-display-tight);
+  color: var(--color-surface);
+  margin-bottom: var(--space-4);
+}
+
+.demo-lede {
+  font-family: var(--font-display);
+  font-size: clamp(1.125rem, 1.8vw, 1.375rem);
+  font-weight: var(--fw-regular);
+  line-height: var(--lh-snug);
+  color: var(--color-surface);
+  opacity: 0.78;
+  max-width: 46ch;
+  margin: 0 auto var(--space-8);
+}
+
+/* The form card — subtle elevated surface on the navy background */
+.demo-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  padding: var(--space-7) var(--space-6);
+  background: rgba(247, 244, 236, 0.04);
+  border: 1px solid rgba(247, 244, 236, 0.12);
+  border-radius: var(--radius-lg);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  text-align: left;
+}
+
+@media (min-width: 640px) {
+  .demo-form {
+    padding: var(--space-8) var(--space-8);
+  }
+}
+
+.demo-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.demo-label {
+  font-family: var(--font-body);
+  font-size: var(--fs-caption);
+  font-weight: var(--fw-semi);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-eyebrow);
+  color: var(--color-surface);
+  opacity: 0.72;
+}
+
+.demo-input {
+  width: 100%;
+  padding: var(--space-4) var(--space-5);
+  background: rgba(247, 244, 236, 0.06);
+  border: 1px solid rgba(247, 244, 236, 0.18);
+  border-radius: var(--radius-md);
+  font-family: var(--font-body);
+  font-size: var(--fs-body-lg);
+  line-height: 1.3;
+  color: var(--color-surface);
+  outline: none;
+  transition:
+    border-color 200ms var(--ease-smooth),
+    background-color 200ms var(--ease-smooth),
+    box-shadow 200ms var(--ease-smooth);
+  min-height: 52px;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.demo-input::placeholder { color: rgba(247, 244, 236, 0.4); }
+.demo-input:hover {
+  border-color: rgba(247, 244, 236, 0.28);
+}
+.demo-input:focus,
+.demo-input:focus-visible {
+  border-color: var(--color-gold);
+  background: rgba(247, 244, 236, 0.08);
+  box-shadow: 0 0 0 3px oklch(70% 0.10 80 / 0.18);
+  outline: none;
+}
+.demo-input[aria-invalid="true"] {
+  border-color: #e28b8b;
+  box-shadow: 0 0 0 3px rgba(226, 139, 139, 0.16);
+}
+
+.demo-error {
+  display: block;
+  min-height: 1em;
+  font-family: var(--font-body);
+  font-size: var(--fs-body-sm);
+  color: #f3a6a6;
+  line-height: 1.3;
+  margin-top: 2px;
+}
+
+.demo-submit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  width: 100%;
+  padding: var(--space-4) var(--space-6);
+  margin-top: var(--space-3);
+  background: var(--color-surface);
+  color: var(--color-navy);
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  font-weight: var(--fw-semi);
+  letter-spacing: var(--tracking-caption);
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  min-height: 56px;
+  transition:
+    background-color 200ms var(--ease-smooth),
+    transform 180ms var(--ease-card),
+    box-shadow 200ms var(--ease-smooth);
+}
+.demo-submit:hover {
+  background: #ffffff;
+  box-shadow: 0 8px 24px oklch(70% 0.10 80 / 0.18);
+}
+.demo-submit:active { transform: translateY(1px); }
+.demo-submit:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 3px;
+}
+.demo-submit svg {
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform 180ms var(--ease-card);
+}
+.demo-submit:hover svg { transform: translateX(3px); }
+
+.demo-privacy {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  font-family: var(--font-body);
+  font-size: var(--fs-body-sm);
+  line-height: 1.5;
+  color: var(--color-surface);
+  opacity: 0.55;
+  max-width: 48ch;
+  margin: var(--space-5) auto 0;
+  text-align: left;
+  justify-content: center;
+}
+.demo-privacy svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  margin-top: 2px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Success state (shown after valid submit).
+   Using [hidden] attribute selector here so the HTML `hidden`
+   attribute correctly hides the element — `display: flex` on a
+   bare class would override it. */
+.demo-success[hidden] { display: none !important; }
+.demo-success {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-9) var(--space-6);
+  background: rgba(247, 244, 236, 0.04);
+  border: 1px solid rgba(247, 244, 236, 0.12);
+  border-radius: var(--radius-lg);
+  animation: demo-success-in var(--dur-reveal) var(--ease-cinematic) both;
+}
+
+.demo-success-mark {
+  width: 64px;
+  height: 64px;
+  color: var(--color-gold);
+}
+
+.demo-success-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.75rem, 2.8vw, 2.25rem);
+  font-weight: var(--fw-semi);
+  color: var(--color-surface);
+  margin: 0;
+}
+
+.demo-success-body {
+  font-family: var(--font-body);
+  font-size: var(--fs-body-lg);
+  color: var(--color-surface);
+  opacity: 0.8;
+  max-width: 40ch;
+  margin: 0;
+  line-height: var(--lh-body);
+}
+
+@keyframes demo-success-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ============================================================
+   Section 8: Footer
+   3-column layout: brand + tagline | sitemap | contact
+   ============================================================ */
+
+.site-footer {
+  background: var(--color-navy);
+  color: var(--color-surface);
+  padding-block: var(--space-9) var(--space-5);
+}
+
+.footer-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-7);
+  padding-bottom: var(--space-7);
+  border-bottom: 1px solid rgba(247, 244, 236, 0.12);
+}
+
+@media (min-width: 768px) {
+  .footer-grid {
+    grid-template-columns: 1.4fr 1fr 1fr;
+    gap: var(--space-8);
+  }
+}
+
+.footer-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--color-surface);
+  margin-bottom: var(--space-4);
+  transition: opacity 200ms var(--ease-smooth);
+}
+.footer-brand:hover { opacity: 0.85; }
+
+.footer-mark {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  display: block;
+}
+
+.footer-brand-text {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: var(--fw-semi);
+  letter-spacing: var(--tracking-display-tight);
+  line-height: 1;
+}
+
+.footer-tagline {
+  font-family: var(--font-display);
+  font-size: var(--fs-body-lg);
+  line-height: var(--lh-snug);
+  color: var(--color-surface);
+  opacity: 0.72;
+  max-width: 32ch;
+  margin: 0;
+}
+
+.footer-column-title {
+  display: block;
+  font-family: var(--font-body);
+  font-size: var(--fs-caption);
+  font-weight: var(--fw-semi);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-eyebrow);
+  color: var(--color-gold);
+  margin-bottom: var(--space-4);
+}
+
+.footer-links {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+}
+.footer-links a {
+  color: var(--color-surface);
+  opacity: 0.82;
+  transition: opacity 200ms var(--ease-smooth);
+}
+.footer-links a:hover {
+  opacity: 1;
+}
+
+.footer-contact-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-surface);
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  opacity: 0.82;
+  transition: opacity 200ms var(--ease-smooth);
+}
+.footer-contact-link:hover { opacity: 1; }
+.footer-contact-link svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.footer-bottom {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding-top: var(--space-5);
+  font-family: var(--font-body);
+  font-size: var(--fs-caption);
+  color: var(--color-surface);
+  opacity: 0.55;
+  letter-spacing: var(--tracking-caption);
+}
+
+@media (min-width: 768px) {
+  .footer-bottom {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.footer-legal {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-5);
+  align-items: center;
+}
+
+.footer-legal a {
+  color: inherit;
+  transition: opacity 200ms var(--ease-smooth);
+}
+.footer-legal a:hover {
+  opacity: 1;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}

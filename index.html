@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light only">
+  <meta name="theme-color" content="#1f3356">
+
+  <title>Atlas — AI deal management for investment bankers</title>
+  <meta name="description" content="Atlas is the AI-powered deal management platform built for investment bankers. Origination, execution, and delivery on one purpose-built system.">
+
+  <link rel="preload" href="fonts/Erode-Semibold.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/Satoshi-Regular.woff2" as="font" type="font/woff2" crossorigin>
+
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/nav.css">
+  <link rel="stylesheet" href="css/hero.css">
+  <link rel="stylesheet" href="css/sections.css">
+
+  <script src="js/atlas.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <div class="nav-sentinel" aria-hidden="true"></div>
+
+  <header class="site-nav" data-scrolled="false">
+    <a class="nav-logo" href="/" aria-label="Atlas home">
+      <svg class="nav-logo-mark" viewBox="0 0 28 28" aria-hidden="true" focusable="false">
+        <g stroke="currentColor" fill="none" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="14" cy="14" r="10"/>
+          <ellipse cx="14" cy="14" rx="4" ry="10"/>
+          <line x1="14" y1="3" x2="14" y2="25"/>
+          <line x1="4" y1="14" x2="24" y2="14"/>
+        </g>
+      </svg>
+      <span class="nav-logo-text">Atlas Integrated</span>
+    </a>
+
+    <nav class="nav-links" aria-label="Primary">
+      <a href="/index.html" aria-current="page">Home</a>
+      <a href="/product.html">Product</a>
+      <a href="/about.html">About</a>
+      <a href="/pricing.html">Pricing</a>
+    </nav>
+
+    <div class="nav-actions">
+      <a class="btn btn-primary nav-cta" href="#book-demo">Book a Demo</a>
+      <button class="nav-toggle" type="button" aria-label="Open navigation menu" aria-expanded="false" aria-controls="nav-overlay">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M3 7 L21 7 M3 12 L21 12 M3 17 L21 17"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Mobile full-screen navigation overlay -->
+  <div class="nav-overlay" id="nav-overlay" aria-hidden="true" role="dialog" aria-label="Navigation menu">
+    <div class="nav-overlay-top">
+      <a class="nav-overlay-logo" href="/" aria-label="Atlas home">
+        <svg viewBox="0 0 28 28" aria-hidden="true" focusable="false">
+          <g stroke="currentColor" fill="none" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="14" cy="14" r="10"/>
+            <ellipse cx="14" cy="14" rx="4" ry="10"/>
+            <line x1="14" y1="3" x2="14" y2="25"/>
+            <line x1="4" y1="14" x2="24" y2="14"/>
+          </g>
+        </svg>
+        <span>Atlas</span>
+      </a>
+      <button class="nav-overlay-close" type="button" aria-label="Close navigation menu">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M 6 6 L 18 18 M 18 6 L 6 18"/>
+        </svg>
+      </button>
+    </div>
+    <nav class="nav-overlay-nav" aria-label="Mobile primary">
+      <a href="/index.html" aria-current="page">Home</a>
+      <a href="/product.html">Product</a>
+      <a href="/about.html">About</a>
+      <a href="/pricing.html">Pricing</a>
+    </nav>
+    <div class="nav-overlay-footer">
+      <a class="btn btn-primary btn-lg nav-overlay-cta" href="#book-demo">Book a Demo</a>
+    </div>
+  </div>
+
+  <main id="main">
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero-inner">
+        <div class="hero-text">
+          <h1 id="hero-title" class="hero-headline">Atlas</h1>
+          <p class="hero-subhead">
+            <span class="subhead-line subhead-line-1">Built for investment bankers,</span>
+            <span class="subhead-line subhead-line-2">by investment bankers.</span>
+          </p>
+          <a class="btn btn-primary btn-lg hero-cta" href="#book-demo">Book a Demo</a>
+        </div>
+
+        <div class="hero-globe">
+          <div class="globe" role="img" aria-label="Atlas — wireframe globe with capability constellation">
+
+            <!-- Single SVG: outline + parallels + 12 JS-animated meridian paths -->
+            <svg class="globe-static" viewBox="0 0 800 800" aria-hidden="true">
+              <circle class="globe-edge" cx="400" cy="400" r="320"/>
+              <g class="globe-parallels">
+                <ellipse cx="400" cy="400" rx="320" ry="120"/>
+                <ellipse cx="400" cy="287" rx="296" ry="111"/>
+                <ellipse cx="400" cy="190" rx="226" ry="85"/>
+                <ellipse cx="400" cy="121" rx="122" ry="46"/>
+                <ellipse cx="400" cy="513" rx="296" ry="111"/>
+                <ellipse cx="400" cy="610" rx="226" ry="85"/>
+                <ellipse cx="400" cy="679" rx="122" ry="46"/>
+              </g>
+              <g class="globe-meridians">
+                <path class="meridian" d="M 400 80 L 400 720"/>
+                <path class="meridian" d="M 400 80 L 400 720"/>
+                <path class="meridian" d="M 400 80 L 400 720"/>
+                <path class="meridian" d="M 400 80 L 400 720"/>
+                <path class="meridian" d="M 400 80 L 400 720"/>
+                <path class="meridian" d="M 400 80 L 400 720"/>
+                <path class="meridian" d="M 400 80 L 400 720"/>
+                <path class="meridian" d="M 400 80 L 400 720"/>
+                <path class="meridian" d="M 400 80 L 400 720"/>
+                <path class="meridian" d="M 400 80 L 400 720"/>
+                <path class="meridian" d="M 400 80 L 400 720"/>
+                <path class="meridian" d="M 400 80 L 400 720"/>
+              </g>
+            </svg>
+
+          </div>
+
+          <!-- Orbital constellation: 10 capabilities at 36° spacing around the globe.
+               Hidden under 1024px (capabilities live in Section 4 grid below). -->
+          <div class="integrations" aria-label="Atlas capabilities">
+            <!-- 270° top -->
+            <div class="integration" style="--x:50%;--y:-10%;--entry-delay:1500ms;">
+              <button class="integration-button" type="button" data-capability="ai-deal-tracking" aria-label="AI Deal Tracking">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <g stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M 8 6 L 21 6"/>
+                    <path d="M 8 12 L 21 12"/>
+                    <path d="M 8 18 L 21 18"/>
+                    <path d="M 3 5.5 L 4.5 7 L 6 4.5"/>
+                    <path d="M 3 11.5 L 4.5 13 L 6 10.5"/>
+                    <path d="M 3 17.5 L 4.5 19 L 6 16.5"/>
+                  </g>
+                </svg>
+              </button>
+              <span class="integration-label">AI Deal Tracking</span>
+            </div>
+
+            <!-- 306° -->
+            <div class="integration" style="--x:85.3%;--y:1.5%;--entry-delay:1650ms;">
+              <button class="integration-button" type="button" data-capability="relationship-intel" aria-label="Relationship Intelligence">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <g stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="4" r="1.8"/>
+                    <circle cx="4" cy="12" r="1.8"/>
+                    <circle cx="20" cy="12" r="1.8"/>
+                    <circle cx="8" cy="20" r="1.8"/>
+                    <circle cx="16" cy="20" r="1.8"/>
+                    <path d="M11 5 L5 11"/>
+                    <path d="M13 5 L19 11"/>
+                    <path d="M5 13 L7 18.5"/>
+                    <path d="M19 13 L17 18.5"/>
+                    <path d="M9.5 20 L14.5 20"/>
+                  </g>
+                </svg>
+              </button>
+              <span class="integration-label">Relationship Intel</span>
+            </div>
+
+            <!-- 342° -->
+            <div class="integration" style="--x:107%;--y:31.5%;--entry-delay:1800ms;">
+              <button class="integration-button" type="button" data-capability="contact-sourcing" aria-label="Contact Sourcing">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <g stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="10" cy="10" r="6"/>
+                    <path d="M14.5 14.5 L20 20"/>
+                    <circle cx="7.2" cy="9" r="0.9"/>
+                    <circle cx="12.8" cy="9" r="0.9"/>
+                    <circle cx="10" cy="13" r="0.9"/>
+                    <path d="M7.5 9.4 L12.5 9.4 M7.7 9.4 L9.7 12.7 M12.3 9.4 L10.3 12.7"/>
+                  </g>
+                </svg>
+              </button>
+              <span class="integration-label">Contact Sourcing</span>
+            </div>
+
+            <!-- 18° -->
+            <div class="integration" style="--x:107%;--y:68.5%;--entry-delay:1950ms;">
+              <button class="integration-button" type="button" data-capability="buyers-list-generation" aria-label="Buyers List Generation">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <g stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 5.5 L20 5.5"/>
+                    <path d="M4 10.5 L17 10.5"/>
+                    <path d="M4 15.5 L14 15.5"/>
+                    <path d="M4 20.5 L11 20.5"/>
+                    <circle cx="3" cy="5.5" r="0.7"/>
+                    <circle cx="3" cy="10.5" r="0.7"/>
+                    <circle cx="3" cy="15.5" r="0.7"/>
+                    <circle cx="3" cy="20.5" r="0.7"/>
+                  </g>
+                </svg>
+              </button>
+              <span class="integration-label">Buyers List Generation</span>
+            </div>
+
+            <!-- 54° -->
+            <div class="integration" style="--x:85.3%;--y:98.5%;--entry-delay:2100ms;">
+              <button class="integration-button" type="button" data-capability="native-pitchbook" aria-label="Native Pitchbook Integration">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <g stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="9" y="9" width="6" height="6" rx="0.5"/>
+                    <path d="M3 8 L8 12 L3 16"/>
+                    <path d="M21 8 L16 12 L21 16"/>
+                    <path d="M12 3 L12 8"/>
+                    <path d="M12 16 L12 21"/>
+                  </g>
+                </svg>
+              </button>
+              <span class="integration-label">Native Pitchbook Integration</span>
+            </div>
+
+            <!-- 90° bottom -->
+            <div class="integration" style="--x:50%;--y:110%;--entry-delay:2250ms;">
+              <button class="integration-button" type="button" data-capability="valuation-workshop" aria-label="Valuation Workshop">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <g stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 4 L4 20 L20 20"/>
+                    <path d="M7 16 L11 12 L14 14 L19 7"/>
+                    <circle cx="7" cy="16" r="1"/>
+                    <circle cx="11" cy="12" r="1"/>
+                    <circle cx="14" cy="14" r="1"/>
+                    <circle cx="19" cy="7" r="1"/>
+                  </g>
+                </svg>
+              </button>
+              <span class="integration-label">Valuation Workshop</span>
+            </div>
+
+            <!-- 126° -->
+            <div class="integration" style="--x:14.7%;--y:98.5%;--entry-delay:2400ms;">
+              <button class="integration-button" type="button" data-capability="virtual-data-room" aria-label="Virtual Data Room">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <g stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3.5" y="4" width="17" height="16" rx="0.5"/>
+                    <path d="M3.5 8.5 L20.5 8.5"/>
+                    <circle cx="12" cy="14" r="3.5"/>
+                    <path d="M12 11.5 L12 14"/>
+                    <path d="M12 14 L13.8 15.5"/>
+                  </g>
+                </svg>
+              </button>
+              <span class="integration-label">Virtual Data Room</span>
+            </div>
+
+            <!-- 162° -->
+            <div class="integration" style="--x:-7%;--y:68.5%;--entry-delay:2550ms;">
+              <button class="integration-button" type="button" data-capability="one-click-reports" aria-label="One Click Reports">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <g stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M6 3 L16 3 L20 7 L20 21 L6 21 Z"/>
+                    <path d="M16 3 L16 7 L20 7"/>
+                    <path d="M9 12 L17 12"/>
+                    <path d="M9 16 L14 16"/>
+                  </g>
+                </svg>
+              </button>
+              <span class="integration-label">One Click Reports</span>
+            </div>
+
+            <!-- 198° -->
+            <div class="integration" style="--x:-7%;--y:31.5%;--entry-delay:2700ms;">
+              <button class="integration-button" type="button" data-capability="crm" aria-label="CRM">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <g stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="5" width="18" height="14" rx="1"/>
+                    <circle cx="8" cy="10.5" r="2"/>
+                    <path d="M 5 16 C 5 13.6 6.8 12.8 8 12.8 C 9.2 12.8 11 13.6 11 16"/>
+                    <line x1="14" y1="9.5" x2="19" y2="9.5"/>
+                    <line x1="14" y1="12.5" x2="19" y2="12.5"/>
+                    <line x1="14" y1="15.5" x2="17" y2="15.5"/>
+                  </g>
+                </svg>
+              </button>
+              <span class="integration-label">CRM</span>
+            </div>
+
+            <!-- 234° -->
+            <div class="integration" style="--x:14.7%;--y:1.5%;--entry-delay:2850ms;">
+              <button class="integration-button" type="button" data-capability="email-campaigns" aria-label="Email Campaigns">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <g stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="5" width="14" height="11" rx="0.5"/>
+                    <path d="M3 7 L10 12 L17 7"/>
+                    <path d="M14 19.5 L22 19.5"/>
+                    <path d="M19 17 L22 19.5 L19 22"/>
+                  </g>
+                </svg>
+              </button>
+              <span class="integration-label">Email Campaigns</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         SECTION 2: Platform Statement
+         Left column: 2–3 sentences establishing the problem.
+         Right column: custom SVG diagram contrasting old fragmented
+         workflow with the unified Atlas record.
+         ============================================================ -->
+    <section class="section section-platform section-divider" aria-labelledby="platform-title">
+      <div class="container">
+        <div class="split-2" data-reveal-group="platform">
+          <div class="split-text">
+            <span class="section-eyebrow" data-reveal>The Platform</span>
+            <h2 id="platform-title" class="section-headline" data-reveal>Built for how deals actually run.</h2>
+            <p class="section-body" data-reveal>Investment banking deal workflows live across spreadsheets, inboxes, and CRMs that were never designed for this work. The administrative coordination becomes its own job — and it grows with every active mandate.</p>
+            <p class="section-body" data-reveal>Atlas replaces that fragmentation with a single record of the deal. Origination, execution, and delivery on one system.</p>
+          </div>
+
+          <div class="split-visual" data-reveal>
+            <svg class="workflow-diagram" viewBox="0 0 700 400" role="img" aria-labelledby="wf-title wf-desc">
+              <title id="wf-title">Atlas AI flow: emails and meetings into deal tracking and CRM</title>
+              <desc id="wf-desc">A diagram showing Email and Meetings cards on the left, both flowing through an Atlas AI node in the center, which then routes the data to Deal Tracking and CRM cards on the right.</desc>
+
+              <defs>
+                <marker id="wf-arrowhead" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+                  <path d="M 0 0 L 10 5 L 0 10 Z" fill="currentColor"/>
+                </marker>
+              </defs>
+
+              <!-- Connecting flow lines (drawn first so cards layer on top) -->
+              <g class="wf-flow">
+                <!-- Email → Atlas AI -->
+                <path d="M 200 130 C 245 130, 245 200, 290 200" marker-end="url(#wf-arrowhead)"/>
+                <!-- Meetings → Atlas AI -->
+                <path d="M 200 270 C 245 270, 245 200, 290 200" marker-end="url(#wf-arrowhead)"/>
+                <!-- Atlas AI → Deal Tracking -->
+                <path d="M 460 200 C 505 200, 505 130, 550 130" marker-end="url(#wf-arrowhead)"/>
+                <!-- Atlas AI → CRM -->
+                <path d="M 460 200 C 505 200, 505 270, 550 270" marker-end="url(#wf-arrowhead)"/>
+              </g>
+
+              <!-- LEFT: Email card -->
+              <g transform="translate(60, 100)">
+                <rect class="wf-card" width="140" height="60" rx="8"/>
+                <g class="wf-icon" transform="translate(18, 22)">
+                  <rect x="0" y="2" width="22" height="16" rx="1"/>
+                  <path d="M 0 4 L 11 13 L 22 4"/>
+                </g>
+                <text class="wf-card-label" x="50" y="36">Emails</text>
+              </g>
+
+              <!-- LEFT: Meetings card -->
+              <g transform="translate(60, 240)">
+                <rect class="wf-card" width="140" height="60" rx="8"/>
+                <g class="wf-icon" transform="translate(18, 20)">
+                  <rect x="0" y="2" width="22" height="20" rx="1"/>
+                  <path d="M 0 8 L 22 8"/>
+                  <path d="M 6 0 L 6 4"/>
+                  <path d="M 16 0 L 16 4"/>
+                </g>
+                <text class="wf-card-label" x="50" y="36">Meetings</text>
+              </g>
+
+              <!-- CENTER: Atlas AI node -->
+              <g transform="translate(290, 140)">
+                <rect class="wf-card wf-card-strong" width="170" height="120" rx="10"/>
+                <g class="wf-icon" transform="translate(85, 42)" stroke-width="1.7">
+                  <circle cx="0" cy="0" r="20"/>
+                  <ellipse cx="0" cy="0" rx="8" ry="20"/>
+                  <line x1="0" y1="-20" x2="0" y2="20"/>
+                  <line x1="-20" y1="0" x2="20" y2="0"/>
+                </g>
+                <text class="wf-card-title" x="85" y="98" text-anchor="middle">Atlas AI</text>
+              </g>
+
+              <!-- RIGHT: Deal Tracking card -->
+              <g transform="translate(550, 100)">
+                <rect class="wf-card" width="140" height="60" rx="8"/>
+                <g class="wf-icon" transform="translate(18, 22)">
+                  <path d="M 0 18 L 5 13 L 10 16 L 16 6 L 22 2"/>
+                  <circle cx="22" cy="2" r="1.6" fill="currentColor"/>
+                  <circle cx="16" cy="6" r="1.4" fill="currentColor"/>
+                  <circle cx="10" cy="16" r="1.4" fill="currentColor"/>
+                  <circle cx="5" cy="13" r="1.4" fill="currentColor"/>
+                </g>
+                <text class="wf-card-label" x="50" y="36">Deal Tracking</text>
+              </g>
+
+              <!-- RIGHT: CRM card -->
+              <g transform="translate(550, 240)">
+                <rect class="wf-card" width="140" height="60" rx="8"/>
+                <g class="wf-icon" transform="translate(18, 20)">
+                  <circle cx="7" cy="6" r="4"/>
+                  <circle cx="17" cy="7" r="3"/>
+                  <path d="M 0 20 C 0 14, 14 14, 14 20"/>
+                  <path d="M 12 20 C 12 16, 22 16, 22 20"/>
+                </g>
+                <text class="wf-card-label" x="50" y="36">CRM</text>
+              </g>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         SECTION 4: Capabilities
+         AI Inbox & Meeting Monitoring is the featured spotlight
+         (full-width navy panel with the secondary slogan).
+         9 other capabilities sit in a responsive grid below.
+         ============================================================ -->
+    <section class="section section-capabilities section-divider" aria-labelledby="capabilities-title">
+      <div class="container">
+        <header class="section-header">
+          <span class="section-eyebrow" data-reveal>Capabilities</span>
+          <h2 id="capabilities-title" class="section-headline" data-reveal>Every part of running a deal, on one system.</h2>
+          <p class="section-lede" data-reveal>From origination through delivery, the full lifecycle of a mandate captured in a single record.</p>
+        </header>
+
+        <!-- Featured spotlight: AI throughout Atlas -->
+        <article class="capability-feature" data-reveal>
+          <div class="feature-grid">
+            <div>
+              <span class="feature-eyebrow">AI in Atlas</span>
+              <h3 class="feature-title">Adopting Atlas means adopting AI for your bank.</h3>
+              <p class="feature-body">The deal lifecycle has many different workflows. Atlas lets you spend time on the ones that matter: Interacting with clients and buyers. Let Atlas handle the rest.</p>
+              <p class="feature-body">We&rsquo;ve deliberately injected AI where it fits naturally: Document Parsing, Market Research, Deal Tracking, and Data Enrichment. All wrapped in a modern UI displaying your data where you&rsquo;d expect.</p>
+            </div>
+            <div>
+              <svg class="feature-icon" viewBox="0 0 28 28" aria-hidden="true">
+                <g stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M 14 3 L 14 11"/>
+                  <path d="M 14 17 L 14 25"/>
+                  <path d="M 3 14 L 11 14"/>
+                  <path d="M 17 14 L 25 14"/>
+                  <circle cx="14" cy="14" r="3"/>
+                  <path d="M 22 5 L 22 8"/>
+                  <path d="M 20.5 6.5 L 23.5 6.5"/>
+                </g>
+              </svg>
+              <p class="feature-slogan">AI has arrived for investment banking. Don&rsquo;t get left behind.</p>
+            </div>
+          </div>
+        </article>
+
+        <!-- Grid of 9 other capabilities -->
+        <div class="capability-grid" data-reveal-group="capabilities">
+
+          <article class="capability-card" data-reveal tabindex="0">
+            <svg class="capability-card-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <g stroke="currentColor" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M 8 6 L 21 6"/>
+                <path d="M 8 12 L 21 12"/>
+                <path d="M 8 18 L 21 18"/>
+                <path d="M 3 5.5 L 4.5 7 L 6 4.5"/>
+                <path d="M 3 11.5 L 4.5 13 L 6 10.5"/>
+                <path d="M 3 17.5 L 4.5 19 L 6 16.5"/>
+              </g>
+            </svg>
+            <h3 class="capability-card-name">AI Deal Tracking</h3>
+            <p class="capability-card-statement">Suggests updates to the deal record and writes contact history notes from real activity.</p>
+            <p class="capability-card-detail">You approve every change before it lands in the database.</p>
+          </article>
+
+          <article class="capability-card" data-reveal tabindex="0">
+            <svg class="capability-card-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <g stroke="currentColor" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="4" r="1.8"/>
+                <circle cx="4" cy="12" r="1.8"/>
+                <circle cx="20" cy="12" r="1.8"/>
+                <circle cx="8" cy="20" r="1.8"/>
+                <circle cx="16" cy="20" r="1.8"/>
+                <path d="M11 5 L5 11"/>
+                <path d="M13 5 L19 11"/>
+                <path d="M5 13 L7 18.5"/>
+                <path d="M19 13 L17 18.5"/>
+                <path d="M9.5 20 L14.5 20"/>
+              </g>
+            </svg>
+            <h3 class="capability-card-name">Relationship Intelligence</h3>
+            <p class="capability-card-statement">Ranked relationships across your entire firm — who knows who, and how well.</p>
+            <p class="capability-card-detail">Built from email history, prior deal participation, and meeting overlap. Scored automatically.</p>
+          </article>
+
+          <article class="capability-card" data-reveal tabindex="0">
+            <svg class="capability-card-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <g stroke="currentColor" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="14" height="10" rx="0.5"/>
+                <path d="M3 5 L10 10 L17 5"/>
+                <path d="M11 16 L11 20"/>
+                <path d="M8 18 L11 21 L14 18"/>
+                <path d="M3 21 L19 21"/>
+              </g>
+            </svg>
+            <h3 class="capability-card-name">Imported Emails</h3>
+            <p class="capability-card-statement">Every email automatically appended to the right contact&rsquo;s CRM record.</p>
+            <p class="capability-card-detail">The full message history attached to every contact, with no copy-paste between systems.</p>
+          </article>
+
+          <article class="capability-card" data-reveal tabindex="0">
+            <svg class="capability-card-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <g stroke="currentColor" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 7 L17 7"/>
+                <path d="M5 12 L19 12"/>
+                <path d="M3 17 L17 17"/>
+                <path d="M19 5 L22 7 L19 9"/>
+                <path d="M21 10 L22 12 L21 14"/>
+                <path d="M19 15 L22 17 L19 19"/>
+              </g>
+            </svg>
+            <h3 class="capability-card-name">Campaign Design &amp; Management</h3>
+            <p class="capability-card-statement">Targeted buyer campaigns for every sell-side mandate — built around the right audience for each client.</p>
+            <p class="capability-card-detail">Audience targeting, send sequencing, and performance metrics across active mandates side by side.</p>
+          </article>
+
+          <article class="capability-card" data-reveal tabindex="0">
+            <svg class="capability-card-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <g stroke="currentColor" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="2.5"/>
+                <path d="M12 9.5 L8 4"/>
+                <path d="M14.5 12 L20 14"/>
+                <path d="M12 14.5 L9 20"/>
+                <circle cx="8" cy="4" r="1.6"/>
+                <circle cx="20" cy="14" r="1.6"/>
+                <circle cx="9" cy="20" r="1.6"/>
+              </g>
+            </svg>
+            <h3 class="capability-card-name">Atlas Mailman</h3>
+            <p class="capability-card-statement">Full outreach software built on Microsoft Graph API for maximum deliverability.</p>
+            <p class="capability-card-detail">In-app reply tracking, opens, link clicks, and bounces — the full statistics suite in one place.</p>
+          </article>
+
+          <article class="capability-card" data-reveal tabindex="0">
+            <svg class="capability-card-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <g stroke="currentColor" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="10" cy="10" r="6"/>
+                <path d="M14.5 14.5 L20 20"/>
+                <circle cx="7.2" cy="9" r="0.9"/>
+                <circle cx="12.8" cy="9" r="0.9"/>
+                <circle cx="10" cy="13" r="0.9"/>
+                <path d="M7.5 9.4 L12.5 9.4 M7.7 9.4 L9.7 12.7 M12.3 9.4 L10.3 12.7"/>
+              </g>
+            </svg>
+            <h3 class="capability-card-name">Contact Sourcing</h3>
+            <p class="capability-card-statement">One-click prioritized search across firm relationships, prior deals, and AI-assisted Apollo enrichment.</p>
+            <p class="capability-card-detail">Known contacts surface first, then enriched candidates, all in a single pass.</p>
+          </article>
+
+          <article class="capability-card" data-reveal tabindex="0">
+            <svg class="capability-card-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <g stroke="currentColor" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 5.5 L20 5.5"/>
+                <path d="M4 10.5 L17 10.5"/>
+                <path d="M4 15.5 L14 15.5"/>
+                <path d="M4 20.5 L11 20.5"/>
+                <circle cx="3" cy="5.5" r="0.7"/>
+                <circle cx="3" cy="10.5" r="0.7"/>
+                <circle cx="3" cy="15.5" r="0.7"/>
+                <circle cx="3" cy="20.5" r="0.7"/>
+              </g>
+            </svg>
+            <h3 class="capability-card-name">Buyers List Generation</h3>
+            <p class="capability-card-statement">A four-phase buyer identification process that refines as the mandate advances.</p>
+            <p class="capability-card-detail">Mandate intake, Pitchbook universe scoping, AI-driven web research, and fit ranking.</p>
+          </article>
+
+          <article class="capability-card" data-reveal tabindex="0">
+            <svg class="capability-card-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <g stroke="currentColor" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="9" y="9" width="6" height="6" rx="0.5"/>
+                <path d="M3 8 L8 12 L3 16"/>
+                <path d="M21 8 L16 12 L21 16"/>
+                <path d="M12 3 L12 8"/>
+                <path d="M12 16 L12 21"/>
+              </g>
+            </svg>
+            <h3 class="capability-card-name">Native Pitchbook Integration</h3>
+            <p class="capability-card-statement">Type a buyer&rsquo;s website. Pitchbook auto-enriches the entire CRM record.</p>
+            <p class="capability-card-detail">Biographies, investment preferences, and the rest of the buyer record pulled in automatically.</p>
+          </article>
+
+          <article class="capability-card" data-reveal tabindex="0">
+            <svg class="capability-card-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <g stroke="currentColor" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 4 L4 20 L20 20"/>
+                <path d="M7 16 L11 12 L14 14 L19 7"/>
+                <circle cx="7" cy="16" r="1"/>
+                <circle cx="11" cy="12" r="1"/>
+                <circle cx="14" cy="14" r="1"/>
+                <circle cx="19" cy="7" r="1"/>
+              </g>
+            </svg>
+            <h3 class="capability-card-name">Valuation Workshop</h3>
+            <p class="capability-card-statement">Integrated modeling environment with real-time scenario analysis.</p>
+            <p class="capability-card-detail">Output-ready formatting for client deliverables, generated from the same dataset.</p>
+          </article>
+
+          <article class="capability-card" data-reveal tabindex="0">
+            <svg class="capability-card-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <g stroke="currentColor" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3.5" y="4" width="17" height="16" rx="0.5"/>
+                <path d="M3.5 8.5 L20.5 8.5"/>
+                <circle cx="12" cy="14" r="3.5"/>
+                <path d="M12 11.5 L12 14"/>
+                <path d="M12 14 L13.8 15.5"/>
+              </g>
+            </svg>
+            <h3 class="capability-card-name">Virtual Data Room</h3>
+            <p class="capability-card-statement">Secure, permissioned document management with granular access logging.</p>
+            <p class="capability-card-detail">Watermarking and buyer-side activity tracking surfaced directly in the deal record.</p>
+          </article>
+
+          <article class="capability-card" data-reveal tabindex="0">
+            <svg class="capability-card-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <g stroke="currentColor" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M6 3 L16 3 L20 7 L20 21 L6 21 Z"/>
+                <path d="M16 3 L16 7 L20 7"/>
+                <path d="M9 12 L17 12"/>
+                <path d="M9 16 L14 16"/>
+              </g>
+            </svg>
+            <h3 class="capability-card-name">Reporting</h3>
+            <p class="capability-card-statement">On-demand report generation from live deal data.</p>
+            <p class="capability-card-detail">Client-ready output, formatted for the audience and the stage of the engagement.</p>
+          </article>
+
+          <article class="capability-card" data-reveal tabindex="0">
+            <svg class="capability-card-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <g stroke="currentColor" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="4" width="18" height="6" rx="1"/>
+                <rect x="3" y="14" width="18" height="6" rx="1"/>
+                <circle cx="6.5" cy="7" r="0.6"/>
+                <circle cx="6.5" cy="17" r="0.6"/>
+                <path d="M15 7 L18 7"/>
+                <path d="M15 17 L18 17"/>
+                <path d="M12 10 L12 14"/>
+                <path d="M9.5 12 L14.5 12"/>
+              </g>
+            </svg>
+            <h3 class="capability-card-name">MCP Server</h3>
+            <p class="capability-card-statement">Easy integration with your enterprise AI subscriptions.</p>
+            <p class="capability-card-detail">Get deal and CRM data from natural language queries in Claude, Perplexity, ChatGPT, and more.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         SECTION 5: Built Different
+         Four specific differentiation claims.
+         No icons in colored circles, no bullet lists. Typography and
+         structure carry the weight.
+         ============================================================ -->
+    <section class="section section-built-different section-divider" aria-labelledby="built-different-title">
+      <div class="container">
+        <header class="section-header">
+          <span class="section-eyebrow" data-reveal>Built different</span>
+          <h2 id="built-different-title" class="section-headline" data-reveal>Not a CRM retrofit.</h2>
+          <p class="section-lede" data-reveal>Every part of Atlas exists because a deal needs it — not because it fit inside a generic business platform.</p>
+        </header>
+
+        <div class="differentiator-grid" data-reveal-group="differentiators">
+          <article class="differentiator" data-reveal>
+            <span class="differentiator-number">01</span>
+            <h3 class="differentiator-title">A data model for M&amp;A.</h3>
+            <p class="differentiator-body">Mandates, buyers, sellers, process stages, NDAs, IOIs, LOIs, and closing mechanics. Every field exists because a deal needs it.</p>
+          </article>
+
+          <article class="differentiator" data-reveal>
+            <span class="differentiator-number">02</span>
+            <h3 class="differentiator-title">Native integrations, zero re-entry.</h3>
+            <p class="differentiator-body">Email, calendar, Pitchbook, and the data room land in the deal record on their own. No copy-paste between systems.</p>
+          </article>
+
+          <article class="differentiator" data-reveal>
+            <span class="differentiator-number">03</span>
+            <h3 class="differentiator-title">Built by people who&rsquo;ve run mandates.</h3>
+            <p class="differentiator-body">Workflow design by practitioners who have run hundreds of lower-middle-market sell-side and buy-side engagements.</p>
+          </article>
+
+          <article class="differentiator" data-reveal>
+            <span class="differentiator-number">04</span>
+            <h3 class="differentiator-title">AI that speaks deal.</h3>
+            <p class="differentiator-body">Trained on mandate language — NDAs, IOIs, LOIs, closings — not generic business process terminology.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         SECTION 7: Book a Demo
+         Full-width navy section. Two-field form (Name, Work Email),
+         client-side validation, transitions to success state without
+         a page reload. Brief privacy statement below the form.
+         ============================================================ -->
+    <section class="section-demo" id="book-demo" aria-labelledby="demo-title">
+      <div class="container container-md">
+        <div class="demo-inner">
+          <span class="demo-eyebrow" data-reveal>Book a Demo</span>
+          <h2 id="demo-title" class="demo-headline" data-reveal>Bring Atlas to your firm.</h2>
+          <p class="demo-lede" data-reveal>A short conversation, a walkthrough of the product, and a path to getting your team onboarded.</p>
+
+          <form class="demo-form" id="demo-form" novalidate>
+            <div class="demo-field">
+              <label for="demo-name" class="demo-label">Name</label>
+              <input
+                id="demo-name"
+                class="demo-input"
+                type="text"
+                name="name"
+                autocomplete="name"
+                placeholder="Jane Partner"
+                required
+                aria-describedby="demo-name-error"
+              >
+              <span id="demo-name-error" class="demo-error" role="alert"></span>
+            </div>
+
+            <div class="demo-field">
+              <label for="demo-email" class="demo-label">Work email</label>
+              <input
+                id="demo-email"
+                class="demo-input"
+                type="email"
+                name="email"
+                autocomplete="email"
+                placeholder="jane@firm.com"
+                required
+                aria-describedby="demo-email-error"
+              >
+              <span id="demo-email-error" class="demo-error" role="alert"></span>
+            </div>
+
+            <button type="submit" class="demo-submit">
+              <span>Book a Demo</span>
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M 5 12 L 19 12"/>
+                <path d="M 13 6 L 19 12 L 13 18"/>
+              </svg>
+            </button>
+          </form>
+
+          <!-- Success state (hidden until form submits successfully) -->
+          <div class="demo-success" id="demo-success" hidden aria-live="polite" tabindex="-1">
+            <svg class="demo-success-mark" viewBox="0 0 48 48" aria-hidden="true">
+              <circle cx="24" cy="24" r="22" fill="none" stroke="currentColor" stroke-width="1.8"/>
+              <path d="M 14 24 L 21 31 L 34 17" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <h3 class="demo-success-title">Thank you.</h3>
+            <p class="demo-success-body">We&rsquo;ll reach out within one business day to schedule your walkthrough.</p>
+          </div>
+
+          <p class="demo-privacy">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="5" y="11" width="14" height="10" rx="1"/>
+              <path d="M 8 11 L 8 7 C 8 4.8 9.8 3 12 3 C 14.2 3 16 4.8 16 7 L 16 11"/>
+            </svg>
+            <span>Used only to schedule and follow up on the demo. No newsletters, no marketing lists, no data sharing.</span>
+          </p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ============================================================
+       SECTION 8: Footer
+       3-column: brand + tagline | sitemap | contact
+       ============================================================ -->
+  <footer class="site-footer" aria-labelledby="footer-title">
+    <h2 id="footer-title" class="visually-hidden">Footer</h2>
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand-col">
+          <a class="footer-brand" href="/" aria-label="Atlas home">
+            <svg class="footer-mark" viewBox="0 0 28 28" aria-hidden="true" focusable="false">
+              <g stroke="currentColor" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="14" cy="14" r="10"/>
+                <ellipse cx="14" cy="14" rx="4" ry="10"/>
+                <line x1="14" y1="3" x2="14" y2="25"/>
+                <line x1="4" y1="14" x2="24" y2="14"/>
+              </g>
+            </svg>
+            <span class="footer-brand-text">Atlas</span>
+          </a>
+          <p class="footer-tagline">AI-powered deal management built for investment bankers.</p>
+        </div>
+
+        <div class="footer-col">
+          <span class="footer-column-title">Product</span>
+          <nav class="footer-links" aria-label="Product">
+            <a href="/product.html">Capabilities</a>
+            <a href="/about.html">About</a>
+            <a href="/pricing.html">Pricing</a>
+            <a href="#book-demo">Book a Demo</a>
+          </nav>
+        </div>
+
+        <div class="footer-col">
+          <span class="footer-column-title">Contact</span>
+          <div class="footer-links">
+            <a class="footer-contact-link" href="mailto:hello@atlasintegrated.ai">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <rect x="3" y="5" width="18" height="14" rx="1"/>
+                <path d="M 3 7 L 12 13 L 21 7"/>
+              </svg>
+              <span>hello@atlasintegrated.ai</span>
+            </a>
+            <a class="footer-contact-link" href="https://atlasintegrated.ai">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="12" cy="12" r="9"/>
+                <path d="M 3 12 L 21 12"/>
+                <path d="M 12 3 C 14.5 6 15.5 9 15.5 12 C 15.5 15 14.5 18 12 21 C 9.5 18 8.5 15 8.5 12 C 8.5 9 9.5 6 12 3 Z"/>
+              </svg>
+              <span>atlasintegrated.ai</span>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <div class="footer-legal">
+          <span>&copy; <span id="footer-year">2026</span> Atlas Integrated. All rights reserved.</span>
+          <a href="/privacy">Privacy</a>
+          <a href="/terms">Terms</a>
+        </div>
+        <span>Built for investment bankers, by investment bankers.</span>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>

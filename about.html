@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light only">
+  <meta name="theme-color" content="#1f3356">
+
+  <title>About — Atlas</title>
+  <meta name="description" content="Atlas was built by practitioners who ran lower-middle-market mandates and encountered the gap between enterprise platforms and the spreadsheet-and-Gmail reality of boutique deal work.">
+
+  <link rel="preload" href="fonts/Erode-Semibold.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/Satoshi-Regular.woff2" as="font" type="font/woff2" crossorigin>
+
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/nav.css">
+  <link rel="stylesheet" href="css/sections.css">
+  <link rel="stylesheet" href="css/product.css">
+  <link rel="stylesheet" href="css/about.css">
+
+  <script src="js/atlas.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <div class="nav-sentinel" aria-hidden="true"></div>
+
+  <header class="site-nav" data-scrolled="false">
+    <a class="nav-logo" href="/" aria-label="Atlas home">
+      <svg class="nav-logo-mark" viewBox="0 0 28 28" aria-hidden="true" focusable="false">
+        <g stroke="currentColor" fill="none" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="14" cy="14" r="10"/>
+          <ellipse cx="14" cy="14" rx="4" ry="10"/>
+          <line x1="14" y1="3" x2="14" y2="25"/>
+          <line x1="4" y1="14" x2="24" y2="14"/>
+        </g>
+      </svg>
+      <span class="nav-logo-text">Atlas</span>
+    </a>
+
+    <nav class="nav-links" aria-label="Primary">
+      <a href="/index.html">Home</a>
+      <a href="/product.html">Product</a>
+      <a href="/about.html" aria-current="page">About</a>
+      <a href="/pricing.html">Pricing</a>
+    </nav>
+
+    <div class="nav-actions">
+      <a class="btn btn-primary nav-cta" href="/#book-demo">Book a Demo</a>
+      <button class="nav-toggle" type="button" aria-label="Open navigation menu" aria-expanded="false" aria-controls="nav-overlay">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M3 7 L21 7 M3 12 L21 12 M3 17 L21 17"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Mobile full-screen navigation overlay -->
+  <div class="nav-overlay" id="nav-overlay" aria-hidden="true" role="dialog" aria-label="Navigation menu">
+    <div class="nav-overlay-top">
+      <a class="nav-overlay-logo" href="/" aria-label="Atlas home">
+        <svg viewBox="0 0 28 28" aria-hidden="true" focusable="false">
+          <g stroke="currentColor" fill="none" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="14" cy="14" r="10"/>
+            <ellipse cx="14" cy="14" rx="4" ry="10"/>
+            <line x1="14" y1="3" x2="14" y2="25"/>
+            <line x1="4" y1="14" x2="24" y2="14"/>
+          </g>
+        </svg>
+        <span>Atlas</span>
+      </a>
+      <button class="nav-overlay-close" type="button" aria-label="Close navigation menu">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M 6 6 L 18 18 M 18 6 L 6 18"/>
+        </svg>
+      </button>
+    </div>
+    <nav class="nav-overlay-nav" aria-label="Mobile primary">
+      <a href="/index.html">Home</a>
+      <a href="/product.html">Product</a>
+      <a href="/about.html" aria-current="page">About</a>
+      <a href="/pricing.html">Pricing</a>
+    </nav>
+    <div class="nav-overlay-footer">
+      <a class="btn btn-primary btn-lg nav-overlay-cta" href="/#book-demo">Book a Demo</a>
+    </div>
+  </div>
+
+  <main id="main">
+
+    <!-- ============================================================
+         ABOUT HERO
+         ============================================================ -->
+    <section class="product-hero">
+      <div class="container container-md">
+        <span class="product-eyebrow" data-reveal>About</span>
+        <h1 class="product-title" data-reveal>Built by the bankers who needed it.</h1>
+        <p class="product-lede" data-reveal>Atlas exists because the people who built it ran the mandates, felt the administrative drag, and could not find a system that fit the work.</p>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         STORY 01 — THE ORIGIN
+         ============================================================ -->
+    <section class="story-section section-divider" aria-labelledby="origin-title">
+      <div class="container">
+        <div class="story-block">
+          <span class="story-number" data-reveal>01</span>
+          <div class="story-content">
+            <h2 id="origin-title" class="story-title" data-reveal>The origin.</h2>
+            <p class="story-body" data-reveal>The founding team spent a decade running lower-middle-market sell-side and buy-side mandates. Deals ran on a fractured stack — a Salesforce instance nobody updated, an inbox where every decision actually lived, a Dropbox of CIMs and buyer lists maintained by whichever associate had the spreadsheet open, and a running group chat that became the real system of record by Tuesday.</p>
+            <p class="story-body" data-reveal>Every tool was built for a different audience. Salesforce was built for quota-carrying sales teams. PitchBook was built for data consumption. Outlook was built for correspondence. None of them understood a mandate. None of them knew what an IOI was, or why a buyer&rsquo;s response on Thursday should update the process stage, or that the CIM draft and the buyer list and the LOI tracker were all describing the same thing.</p>
+            <p class="story-body" data-reveal>The result was predictable. Associates spent hours a day copying information between systems. VPs spent Friday evenings reconstructing a week of deal activity from email threads. Senior bankers stopped trusting the CRM and started asking questions in person — which meant the CRM stopped being useful at all.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         STORY 02 — THE BUILD
+         ============================================================ -->
+    <section class="story-section section-divider" aria-labelledby="build-title">
+      <div class="container">
+        <div class="story-block">
+          <span class="story-number" data-reveal>02</span>
+          <div class="story-content">
+            <h2 id="build-title" class="story-title" data-reveal>The build.</h2>
+            <p class="story-body" data-reveal>We considered retrofitting. Every banker considers retrofitting. Pick a CRM, bolt on a few fields for mandates and buyers, wire up some integrations, train the team, and hope it sticks. Firms have been doing that for twenty years. It never sticks — because the data model underneath was never designed for deal work, and no configuration layer can change that.</p>
+            <p class="story-body" data-reveal>The only viable answer was to build from scratch with the right primitives. A mandate is not a sales opportunity. A buyer is not a lead. A deal stage is not a pipeline phase. An IOI is not a quote. The Atlas data model starts with these distinctions and builds upward — which means every feature on top of it can speak the language of the work without translation.</p>
+            <p class="story-body" data-reveal>That decision set the scope. We were not writing a CRM add-on. We were writing the operating system for a deal.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         STORY 03 — THE PHILOSOPHY
+         ============================================================ -->
+    <section class="philosophy section-divider" aria-labelledby="philosophy-title">
+      <div class="container container-md">
+        <div class="philosophy-inner">
+          <span class="philosophy-eyebrow">03 — The philosophy</span>
+          <h2 id="philosophy-title" class="philosophy-headline">AI in Atlas is invisible infrastructure.</h2>
+          <p class="philosophy-body">It surfaces the right information at the right moment. It drafts the note, queues the update, flags the follow-up. It does not interrupt, explain itself, or require configuration. Bankers do not change how they work to use it — they work the way they already do, and the deal record stays current underneath.</p>
+          <p class="philosophy-body">Every AI suggestion is reviewable. Nothing writes itself into the record without a banker&rsquo;s approval. The platform earns trust the same way a good analyst does: by being right, quietly, for long enough that you stop double-checking.</p>
+          <p class="philosophy-statement">The best infrastructure is the kind you stop noticing.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         ABOUT CTA
+         ============================================================ -->
+    <section class="product-cta section-divider">
+      <div class="container container-md">
+        <div class="product-cta-inner">
+          <h2 class="product-cta-headline">Let&rsquo;s talk about your mandate.</h2>
+          <p class="product-cta-lede">See how Atlas maps to a deal your firm is running right now.</p>
+          <a class="btn btn-primary btn-lg product-cta-button" href="/#book-demo">Book a Demo</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ============================================================
+       FOOTER
+       ============================================================ -->
+  <footer class="site-footer" aria-labelledby="footer-title">
+    <h2 id="footer-title" class="visually-hidden">Footer</h2>
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand-col">
+          <a class="footer-brand" href="/" aria-label="Atlas home">
+            <svg class="footer-mark" viewBox="0 0 28 28" aria-hidden="true" focusable="false">
+              <g stroke="currentColor" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="14" cy="14" r="10"/>
+                <ellipse cx="14" cy="14" rx="4" ry="10"/>
+                <line x1="14" y1="3" x2="14" y2="25"/>
+                <line x1="4" y1="14" x2="24" y2="14"/>
+              </g>
+            </svg>
+            <span class="footer-brand-text">Atlas</span>
+          </a>
+          <p class="footer-tagline">AI-powered deal management built for investment bankers.</p>
+        </div>
+
+        <div class="footer-col">
+          <span class="footer-column-title">Product</span>
+          <nav class="footer-links" aria-label="Product">
+            <a href="/product.html">Capabilities</a>
+            <a href="/about.html">About</a>
+            <a href="/pricing.html">Pricing</a>
+            <a href="/#book-demo">Book a Demo</a>
+          </nav>
+        </div>
+
+        <div class="footer-col">
+          <span class="footer-column-title">Contact</span>
+          <div class="footer-links">
+            <a class="footer-contact-link" href="mailto:hello@atlasintegrated.ai">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <rect x="3" y="5" width="18" height="14" rx="1"/>
+                <path d="M 3 7 L 12 13 L 21 7"/>
+              </svg>
+              <span>hello@atlasintegrated.ai</span>
+            </a>
+            <a class="footer-contact-link" href="https://atlasintegrated.ai">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="12" cy="12" r="9"/>
+                <path d="M 3 12 L 21 12"/>
+                <path d="M 12 3 C 14.5 6 15.5 9 15.5 12 C 15.5 15 14.5 18 12 21 C 9.5 18 8.5 15 8.5 12 C 8.5 9 9.5 6 12 3 Z"/>
+              </svg>
+              <span>atlasintegrated.ai</span>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <div class="footer-legal">
+          <span>&copy; <span id="footer-year">2026</span> Atlas Integrated. All rights reserved.</span>
+          <a href="/privacy.html">Privacy</a>
+          <a href="/terms.html">Terms</a>
+        </div>
+        <span>Built for investment bankers, by investment bankers.</span>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>

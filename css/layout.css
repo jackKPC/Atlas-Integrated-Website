@@ -1,0 +1,47 @@
+/* ============================================================
+   Atlas Integrated — Layout primitives
+   Containers, grid scaffolds, section spacing
+   ============================================================ */
+
+.container {
+  width: 100%;
+  max-width: var(--container-xl);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+.container-lg {
+  max-width: var(--container-lg);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+.container-md {
+  max-width: var(--container-md);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+/* ---- Section scaffolding (used by sections 2+ in M2) ---- */
+
+.section {
+  padding-block: var(--space-10);
+}
+@media (max-width: 767px) {
+  .section { padding-block: var(--space-8); }
+}
+
+/* ---- Generic two-column split (left text / right visual) ---- */
+
+.split {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-7);
+  align-items: center;
+}
+@media (min-width: 1024px) {
+  .split {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: var(--space-8);
+  }
+}

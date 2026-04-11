@@ -1,0 +1,166 @@
+/* ============================================================
+   Atlas Integrated — About page
+   Story blocks, philosophy statement, team grid
+   ============================================================ */
+
+/* ---- Story sections (01 Origin, 02 Build) ---- */
+
+.story-section {
+  padding-block: var(--space-10);
+}
+
+@media (max-width: 1023px) {
+  .story-section { padding-block: var(--space-9); }
+}
+
+@media (max-width: 767px) {
+  .story-section { padding-block: var(--space-8); }
+}
+
+.story-block {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--space-6) var(--space-8);
+  max-width: 980px;
+}
+
+@media (max-width: 767px) {
+  .story-block {
+    grid-template-columns: 1fr;
+    gap: var(--space-5);
+  }
+}
+
+.story-number {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 3.5vw, 2.75rem);
+  font-weight: var(--fw-semi);
+  line-height: 1;
+  color: var(--color-gold);
+  letter-spacing: var(--tracking-display-tight);
+  padding-top: 6px;
+}
+
+.story-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.story-title {
+  font-family: var(--font-display);
+  font-size: clamp(2.25rem, 4vw, 3.25rem);
+  font-weight: var(--fw-semi);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--tracking-display-tight);
+  color: var(--fg-body);
+  margin: 0 0 var(--space-5);
+  max-width: 18ch;
+}
+
+.story-body {
+  font-family: var(--font-body);
+  font-size: var(--fs-body-lg);
+  line-height: var(--lh-body);
+  color: var(--fg-body);
+  margin: 0;
+  max-width: 62ch;
+}
+
+.story-body + .story-body {
+  margin-top: var(--space-4);
+}
+
+/* ---- Philosophy: full-width navy statement ---- */
+
+.philosophy {
+  position: relative;
+  background: var(--color-navy);
+  color: var(--color-surface);
+  padding-block: var(--space-10);
+  overflow: hidden;
+}
+
+@media (max-width: 1023px) {
+  .philosophy { padding-block: var(--space-9); }
+}
+
+@media (max-width: 767px) {
+  .philosophy { padding-block: var(--space-8); }
+}
+
+.philosophy::before {
+  content: "";
+  position: absolute;
+  top: -40%;
+  right: -10%;
+  width: 720px;
+  height: 720px;
+  background: radial-gradient(circle at center, oklch(70% 0.10 80 / 0.08) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.philosophy-inner {
+  position: relative;
+  z-index: 1;
+}
+
+.philosophy-eyebrow {
+  display: inline-block;
+  font-family: var(--font-body);
+  font-size: var(--fs-caption);
+  font-weight: var(--fw-semi);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-eyebrow);
+  color: var(--color-gold);
+  margin-bottom: var(--space-5);
+}
+
+.philosophy-headline {
+  font-family: var(--font-display);
+  font-size: clamp(2.25rem, 4.2vw, 3.5rem);
+  font-weight: var(--fw-semi);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--tracking-display-tight);
+  color: var(--color-surface);
+  margin: 0 0 var(--space-6);
+  max-width: 22ch;
+}
+
+.philosophy-body {
+  font-family: var(--font-body);
+  font-size: var(--fs-body-lg);
+  line-height: var(--lh-body);
+  color: var(--color-surface);
+  opacity: 0.82;
+  max-width: 58ch;
+  margin: 0;
+}
+
+.philosophy-body + .philosophy-body {
+  margin-top: var(--space-4);
+}
+
+.philosophy-statement {
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, 2.4vw, 2rem);
+  font-weight: var(--fw-regular);
+  line-height: var(--lh-snug);
+  letter-spacing: var(--tracking-display);
+  color: var(--color-surface);
+  border-top: 1px solid rgba(247, 244, 236, 0.18);
+  padding-top: var(--space-6);
+  margin-top: var(--space-7);
+  margin-bottom: 0;
+  max-width: 32ch;
+}
+
+/* ---- Active nav link state ---- */
+
+.nav-links a[aria-current="page"] {
+  color: var(--color-navy);
+  font-weight: var(--fw-semi);
+}
+.nav-links a[aria-current="page"]::after {
+  width: 100%;
+  background: var(--color-gold);
+}

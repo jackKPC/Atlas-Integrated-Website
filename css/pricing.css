@@ -1,0 +1,223 @@
+/* ============================================================
+   Atlas Integrated — Pricing page
+   Scoped statement, onboarding sequence, data commitment
+   ============================================================ */
+
+/* ---- Pricing statement ---- */
+
+.pricing-statement {
+  padding-block: var(--space-9) var(--space-10);
+}
+
+@media (max-width: 1023px) {
+  .pricing-statement { padding-block: var(--space-8) var(--space-9); }
+}
+
+@media (max-width: 767px) {
+  .pricing-statement { padding-block: var(--space-7) var(--space-8); }
+}
+
+.pricing-statement-inner {
+  max-width: 720px;
+  margin-inline: auto;
+  text-align: center;
+}
+
+.pricing-statement-lede {
+  font-family: var(--font-display);
+  font-size: clamp(1.375rem, 2.2vw, 1.625rem);
+  font-weight: var(--fw-regular);
+  line-height: var(--lh-snug);
+  letter-spacing: var(--tracking-display);
+  color: var(--fg-body);
+  max-width: 54ch;
+  margin: 0 auto var(--space-7);
+}
+
+.pricing-cta {
+  display: inline-flex;
+}
+
+/* ---- Onboarding sequence ---- */
+
+.onboarding {
+  padding-block: var(--space-10);
+}
+
+@media (max-width: 1023px) {
+  .onboarding { padding-block: var(--space-9); }
+}
+
+@media (max-width: 767px) {
+  .onboarding { padding-block: var(--space-8); }
+}
+
+.onboarding-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-6);
+  max-width: 1120px;
+  margin-inline: auto;
+}
+
+@media (min-width: 1024px) {
+  .onboarding-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-6);
+  }
+}
+
+.onboarding-step {
+  position: relative;
+  padding: var(--space-7) var(--space-6);
+  background: var(--bg-page);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  transition:
+    border-color 240ms var(--ease-smooth),
+    box-shadow 240ms var(--ease-smooth);
+}
+
+.onboarding-step:hover {
+  border-color: var(--color-border-strong);
+  box-shadow: 0 12px 32px rgba(31, 51, 86, 0.06);
+}
+
+.onboarding-number {
+  font-family: var(--font-body);
+  font-size: var(--fs-caption);
+  font-weight: var(--fw-semi);
+  letter-spacing: var(--tracking-eyebrow);
+  color: var(--color-gold);
+  text-transform: uppercase;
+}
+
+.onboarding-step-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, 2.2vw, 1.875rem);
+  font-weight: var(--fw-semi);
+  line-height: var(--lh-snug);
+  letter-spacing: var(--tracking-display);
+  color: var(--color-navy);
+  margin: 0;
+}
+
+.onboarding-step-duration {
+  font-family: var(--font-body);
+  font-size: var(--fs-body-sm);
+  font-weight: var(--fw-medium);
+  color: var(--fg-muted);
+  letter-spacing: var(--tracking-caption);
+  margin: 0 0 var(--space-2);
+}
+
+.onboarding-step-body {
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--fg-body);
+  margin: 0;
+  max-width: 46ch;
+}
+
+.onboarding-meta {
+  margin-top: auto;
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.onboarding-meta-label {
+  display: block;
+  font-family: var(--font-body);
+  font-size: var(--fs-caption);
+  font-weight: var(--fw-semi);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-eyebrow);
+  color: var(--color-gold);
+  margin-bottom: var(--space-2);
+}
+
+.onboarding-meta p {
+  font-family: var(--font-body);
+  font-size: var(--fs-body-sm);
+  line-height: var(--lh-body);
+  color: var(--fg-muted);
+  margin: 0;
+  max-width: 42ch;
+}
+
+/* ---- Data commitment (navy full-width) ---- */
+
+.pricing-commitment {
+  position: relative;
+  background: var(--color-navy);
+  color: var(--color-surface);
+  padding-block: var(--space-9);
+  overflow: hidden;
+}
+
+@media (max-width: 767px) {
+  .pricing-commitment { padding-block: var(--space-8); }
+}
+
+.pricing-commitment::before {
+  content: "";
+  position: absolute;
+  top: -30%;
+  left: 50%;
+  width: 720px;
+  height: 720px;
+  transform: translateX(-50%);
+  background: radial-gradient(circle at center, oklch(70% 0.10 80 / 0.08) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.commitment-inner {
+  position: relative;
+  z-index: 1;
+  max-width: 640px;
+  margin-inline: auto;
+  text-align: center;
+}
+
+.pricing-commitment .section-eyebrow {
+  color: var(--color-gold);
+  margin-bottom: var(--space-4);
+}
+
+.commitment-headline {
+  font-family: var(--font-display);
+  font-size: clamp(1.875rem, 3.2vw, 2.75rem);
+  font-weight: var(--fw-semi);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--tracking-display-tight);
+  color: var(--color-surface);
+  margin: 0 0 var(--space-4);
+}
+
+.commitment-body {
+  font-family: var(--font-body);
+  font-size: var(--fs-body-lg);
+  line-height: var(--lh-body);
+  color: var(--color-surface);
+  opacity: 0.82;
+  max-width: 54ch;
+  margin: 0 auto;
+}
+
+/* ---- Active nav link state ---- */
+
+.nav-links a[aria-current="page"] {
+  color: var(--color-navy);
+  font-weight: var(--fw-semi);
+}
+.nav-links a[aria-current="page"]::after {
+  width: 100%;
+  background: var(--color-gold);
+}

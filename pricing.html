@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light only">
+  <meta name="theme-color" content="#1f3356">
+
+  <title>Pricing — Atlas</title>
+  <meta name="description" content="Atlas pricing is scoped to your firm — team size, deal volume, and integration requirements. Book a conversation to discuss a fit for your mandate load.">
+
+  <link rel="preload" href="fonts/Erode-Semibold.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/Satoshi-Regular.woff2" as="font" type="font/woff2" crossorigin>
+
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/nav.css">
+  <link rel="stylesheet" href="css/sections.css">
+  <link rel="stylesheet" href="css/product.css">
+  <link rel="stylesheet" href="css/pricing.css">
+
+  <script src="js/atlas.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <div class="nav-sentinel" aria-hidden="true"></div>
+
+  <header class="site-nav" data-scrolled="false">
+    <a class="nav-logo" href="/" aria-label="Atlas home">
+      <svg class="nav-logo-mark" viewBox="0 0 28 28" aria-hidden="true" focusable="false">
+        <g stroke="currentColor" fill="none" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="14" cy="14" r="10"/>
+          <ellipse cx="14" cy="14" rx="4" ry="10"/>
+          <line x1="14" y1="3" x2="14" y2="25"/>
+          <line x1="4" y1="14" x2="24" y2="14"/>
+        </g>
+      </svg>
+      <span class="nav-logo-text">Atlas</span>
+    </a>
+
+    <nav class="nav-links" aria-label="Primary">
+      <a href="/index.html">Home</a>
+      <a href="/product.html">Product</a>
+      <a href="/about.html">About</a>
+      <a href="/pricing.html" aria-current="page">Pricing</a>
+    </nav>
+
+    <div class="nav-actions">
+      <a class="btn btn-primary nav-cta" href="/#book-demo">Book a Demo</a>
+      <button class="nav-toggle" type="button" aria-label="Open navigation menu" aria-expanded="false" aria-controls="nav-overlay">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M3 7 L21 7 M3 12 L21 12 M3 17 L21 17"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Mobile full-screen navigation overlay -->
+  <div class="nav-overlay" id="nav-overlay" aria-hidden="true" role="dialog" aria-label="Navigation menu">
+    <div class="nav-overlay-top">
+      <a class="nav-overlay-logo" href="/" aria-label="Atlas home">
+        <svg viewBox="0 0 28 28" aria-hidden="true" focusable="false">
+          <g stroke="currentColor" fill="none" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="14" cy="14" r="10"/>
+            <ellipse cx="14" cy="14" rx="4" ry="10"/>
+            <line x1="14" y1="3" x2="14" y2="25"/>
+            <line x1="4" y1="14" x2="24" y2="14"/>
+          </g>
+        </svg>
+        <span>Atlas</span>
+      </a>
+      <button class="nav-overlay-close" type="button" aria-label="Close navigation menu">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M 6 6 L 18 18 M 18 6 L 6 18"/>
+        </svg>
+      </button>
+    </div>
+    <nav class="nav-overlay-nav" aria-label="Mobile primary">
+      <a href="/index.html">Home</a>
+      <a href="/product.html">Product</a>
+      <a href="/about.html">About</a>
+      <a href="/pricing.html" aria-current="page">Pricing</a>
+    </nav>
+    <div class="nav-overlay-footer">
+      <a class="btn btn-primary btn-lg nav-overlay-cta" href="/#book-demo">Book a Demo</a>
+    </div>
+  </div>
+
+  <main id="main">
+
+    <!-- ============================================================
+         PRICING HERO
+         ============================================================ -->
+    <section class="product-hero">
+      <div class="container container-md">
+        <span class="product-eyebrow" data-reveal>Pricing</span>
+        <h1 class="product-title" data-reveal>Scoped to your firm, not a published grid.</h1>
+        <p class="product-lede" data-reveal>Atlas pricing is structured to fit your firm — whether you are a two-person boutique or a 30-professional regional bank. We scope engagements based on team size, deal volume, and integration requirements.</p>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         PRICING STATEMENT + CTA
+         ============================================================ -->
+    <section class="pricing-statement section-divider">
+      <div class="container container-md">
+        <div class="pricing-statement-inner">
+          <p class="pricing-statement-lede">A short conversation is enough for us to put a number on paper. We will ask about your active mandate count, team structure, and the systems you are replacing — and come back with a scope that fits.</p>
+          <a class="btn btn-primary btn-lg pricing-cta" href="/#book-demo">Book a Demo</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         ONBOARDING
+         ============================================================ -->
+    <section class="onboarding section-divider" aria-labelledby="onboarding-title">
+      <div class="container">
+        <header class="section-header">
+          <span class="section-eyebrow" data-reveal>Onboarding</span>
+          <h2 id="onboarding-title" class="section-headline" data-reveal>Measured in days, not months.</h2>
+          <p class="section-lede" data-reveal>Implementation is a short, well-defined sequence. Your existing workflow is enhanced, not replaced.</p>
+        </header>
+
+        <div class="onboarding-grid">
+
+          <article class="onboarding-step">
+            <span class="onboarding-number">01</span>
+            <h3 class="onboarding-step-title">Scoping call</h3>
+            <p class="onboarding-step-duration">Day 1</p>
+            <p class="onboarding-step-body">A thirty-minute conversation on your team, active mandates, current stack, and the handful of integrations that matter. We leave with a concrete scope and a deployment date.</p>
+            <div class="onboarding-meta">
+              <div>
+                <span class="onboarding-meta-label">From your firm</span>
+                <p>One decision-maker on the call.</p>
+              </div>
+              <div>
+                <span class="onboarding-meta-label">From Atlas</span>
+                <p>A scoped proposal within one business day.</p>
+              </div>
+            </div>
+          </article>
+
+          <article class="onboarding-step">
+            <span class="onboarding-number">02</span>
+            <h3 class="onboarding-step-title">Deployed to your infrastructure</h3>
+            <p class="onboarding-step-duration">Days 2 &ndash; 5</p>
+            <p class="onboarding-step-body">We port Atlas to your Microsoft infrastructure and stand up a dedicated instance inside your tenant. We partner exclusively with Azure&rsquo;s OpenAI model deployments so that you own your data — it never goes to any third party. Deal and contact records are migrated from your current system, integrations are configured, and engagement history is staged for relationship intelligence.</p>
+            <div class="onboarding-meta">
+              <div>
+                <span class="onboarding-meta-label">From your firm</span>
+                <p>An Azure tenant with an Azure OpenAI deployment, an admin handoff for Microsoft Graph, a CRM export, and a named technical contact.</p>
+              </div>
+              <div>
+                <span class="onboarding-meta-label">From Atlas</span>
+                <p>Atlas deployed inside your tenant, integrations connected, historical data loaded and validated — streamlining data compliance and AI token billing in one bill you already pay.</p>
+              </div>
+            </div>
+          </article>
+
+          <article class="onboarding-step">
+            <span class="onboarding-number">03</span>
+            <h3 class="onboarding-step-title">Team onboarding</h3>
+            <p class="onboarding-step-duration">Days 6 &ndash; 10</p>
+            <p class="onboarding-step-body">A guided session with the full team, followed by a week of hands-on support as real mandates move into the platform. A dedicated onboarding lead stays available through the first campaign.</p>
+            <div class="onboarding-meta">
+              <div>
+                <span class="onboarding-meta-label">From your firm</span>
+                <p>A one-hour team session and a named internal champion.</p>
+              </div>
+              <div>
+                <span class="onboarding-meta-label">From Atlas</span>
+                <p>Live training, named onboarding lead, and direct support through your first full campaign.</p>
+              </div>
+            </div>
+          </article>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         DATA COMMITMENT
+         ============================================================ -->
+    <section class="pricing-commitment section-divider">
+      <div class="container container-md">
+        <div class="commitment-inner">
+          <span class="section-eyebrow">Data commitment</span>
+          <h2 class="commitment-headline">Your data belongs to your firm.</h2>
+          <p class="commitment-body">We port Atlas to your Microsoft infrastructure, streamlining data compliance and AI token billing. We partner exclusively with Azure&rsquo;s OpenAI model deployments so that you own your data. It never goes to any third party. Ever.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         PRICING CTA
+         ============================================================ -->
+    <section class="product-cta section-divider">
+      <div class="container container-md">
+        <div class="product-cta-inner">
+          <h2 class="product-cta-headline">Put a number on paper.</h2>
+          <p class="product-cta-lede">Thirty minutes is enough. We will come back with a scope that fits.</p>
+          <a class="btn btn-primary btn-lg product-cta-button" href="/#book-demo">Book a Demo</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ============================================================
+       FOOTER
+       ============================================================ -->
+  <footer class="site-footer" aria-labelledby="footer-title">
+    <h2 id="footer-title" class="visually-hidden">Footer</h2>
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand-col">
+          <a class="footer-brand" href="/" aria-label="Atlas home">
+            <svg class="footer-mark" viewBox="0 0 28 28" aria-hidden="true" focusable="false">
+              <g stroke="currentColor" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="14" cy="14" r="10"/>
+                <ellipse cx="14" cy="14" rx="4" ry="10"/>
+                <line x1="14" y1="3" x2="14" y2="25"/>
+                <line x1="4" y1="14" x2="24" y2="14"/>
+              </g>
+            </svg>
+            <span class="footer-brand-text">Atlas</span>
+          </a>
+          <p class="footer-tagline">AI-powered deal management built for investment bankers.</p>
+        </div>
+
+        <div class="footer-col">
+          <span class="footer-column-title">Product</span>
+          <nav class="footer-links" aria-label="Product">
+            <a href="/product.html">Capabilities</a>
+            <a href="/about.html">About</a>
+            <a href="/pricing.html">Pricing</a>
+            <a href="/#book-demo">Book a Demo</a>
+          </nav>
+        </div>
+
+        <div class="footer-col">
+          <span class="footer-column-title">Contact</span>
+          <div class="footer-links">
+            <a class="footer-contact-link" href="mailto:hello@atlasintegrated.ai">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <rect x="3" y="5" width="18" height="14" rx="1"/>
+                <path d="M 3 7 L 12 13 L 21 7"/>
+              </svg>
+              <span>hello@atlasintegrated.ai</span>
+            </a>
+            <a class="footer-contact-link" href="https://atlasintegrated.ai">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="12" cy="12" r="9"/>
+                <path d="M 3 12 L 21 12"/>
+                <path d="M 12 3 C 14.5 6 15.5 9 15.5 12 C 15.5 15 14.5 18 12 21 C 9.5 18 8.5 15 8.5 12 C 8.5 9 9.5 6 12 3 Z"/>
+              </svg>
+              <span>atlasintegrated.ai</span>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <div class="footer-legal">
+          <span>&copy; <span id="footer-year">2026</span> Atlas Integrated. All rights reserved.</span>
+          <a href="/privacy.html">Privacy</a>
+          <a href="/terms.html">Terms</a>
+        </div>
+        <span>Built for investment bankers, by investment bankers.</span>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,195 @@
+/* ============================================================
+   Atlas Integrated — Base styles
+   Reset, fonts, typography baseline, accessibility utilities
+   ============================================================ */
+
+/* ---- Self-hosted Fontshare faces (Latin subset is the .woff2 default) ---- */
+
+@font-face {
+  font-family: 'Erode';
+  src: url('../fonts/Erode-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Erode';
+  src: url('../fonts/Erode-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Erode';
+  src: url('../fonts/Erode-Semibold.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Erode';
+  src: url('../fonts/Erode-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Satoshi';
+  src: url('../fonts/Satoshi-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Satoshi';
+  src: url('../fonts/Satoshi-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Satoshi';
+  src: url('../fonts/Satoshi-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ---- Modern reset ---- */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+}
+
+body {
+  min-height: 100vh;
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  font-weight: var(--fw-regular);
+  line-height: var(--lh-body);
+  color: var(--fg-body);
+  background-color: var(--bg-page);
+  font-feature-settings: "tnum" 1, "kern" 1;
+  font-variant-numeric: tabular-nums;
+  transition: background-color 240ms var(--ease-smooth), color 240ms var(--ease-smooth);
+}
+
+img, svg, video, canvas, picture {
+  display: block;
+  max-width: 100%;
+}
+
+svg { fill: currentColor; }
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+ul, ol { list-style: none; }
+
+input, textarea, select {
+  font: inherit;
+  color: inherit;
+}
+
+/* ---- Typography baseline ---- */
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  font-weight: var(--fw-semi);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--tracking-display);
+  color: var(--fg-body);
+}
+
+h1 {
+  font-size: var(--fs-display-xl);
+  font-weight: var(--fw-semi);
+  letter-spacing: var(--tracking-display-tight);
+}
+
+h2 { font-size: var(--fs-display-l); }
+h3 { font-size: var(--fs-display-m); }
+h4 { font-size: var(--fs-display-s); }
+
+p {
+  max-width: 60ch;
+  color: var(--fg-body);
+}
+
+strong { font-weight: var(--fw-semi); }
+em { font-style: italic; }
+
+/* ---- Focus states ---- */
+
+:focus { outline: none; }
+
+:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 3px;
+  border-radius: var(--radius-sm);
+}
+
+/* ---- Accessibility utilities ---- */
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skip-link {
+  position: absolute;
+  top: -100px;
+  left: var(--space-4);
+  z-index: var(--z-overlay);
+  padding: var(--space-3) var(--space-5);
+  background: var(--color-navy);
+  color: var(--color-surface);
+  font-weight: var(--fw-medium);
+  border-radius: var(--radius-md);
+  transition: top 200ms var(--ease-smooth);
+}
+.skip-link:focus-visible {
+  top: var(--space-4);
+}
+
+/* ---- Selection ---- */
+
+::selection {
+  background: var(--color-navy);
+  color: var(--color-surface);
+}
