@@ -1,0 +1,108 @@
+/* ============================================================
+   Atlas Integrated — Motion layer
+   ============================================================
+   Scroll reveals, section-divider grow-in, cross-document page
+   transitions. Loaded last so it can override resting states
+   from the base components. Fully no-ops without JS (via the
+   .js-reveals gate on <html>) and collapses to the final state
+   under prefers-reduced-motion.
+   ============================================================ */
+
+/* ---- Scroll reveals ---------------------------------------------------
+ * JS sets .js-reveals on <html>, then marks each [data-reveal] element
+ * with .is-revealed as it enters the viewport. Sibling stagger comes
+ * from the --reveal-index custom property, assigned per element. */
+
+.js-reveals [data-reveal] {
+  opacity: 0;
+  transform: translateY(8px);
+  transition:
+    opacity 260ms var(--ease-cinematic) calc(var(--reveal-index, 0) * 40ms),
+    transform 260ms var(--ease-cinematic) calc(var(--reveal-index, 0) * 40ms);
+  will-change: opacity, transform;
+}
+
+.js-reveals [data-reveal].is-revealed {
+  opacity: 1;
+  transform: none;
+}
+
+/* ---- Section divider grow-in -----------------------------------------
+ * Without JS, .section-divider renders its normal 1px border-top. With
+ * JS enabled, that border is hidden and an ::after pseudo draws the
+ * hairline from left edge to full width as the section enters view. */
+
+.section-divider {
+  position: relative;
+}
+
+.js-reveals .section-divider {
+  border-top-color: transparent;
+}
+
+.js-reveals .section-divider::after {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--color-border);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 700ms var(--ease-cinematic);
+  pointer-events: none;
+}
+
+.js-reveals .section-divider.is-divider-in::after {
+  transform: scaleX(1);
+}
+
+/* ---- Cross-document page transitions ---------------------------------
+ * Native View Transitions API fade between pages on navigation.
+ * Supported in Chrome/Edge 126+ and Safari 18+. Unsupported browsers
+ * silently fall back to normal page loads. */
+
+@view-transition {
+  navigation: auto;
+}
+
+::view-transition-old(root) {
+  animation: atlas-fade-out 180ms var(--ease-smooth) forwards;
+}
+
+::view-transition-new(root) {
+  animation: atlas-fade-in 320ms var(--ease-cinematic) forwards;
+}
+
+@keyframes atlas-fade-out {
+  to { opacity: 0; }
+}
+
+@keyframes atlas-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ---- Reduced motion --------------------------------------------------
+ * Kill every motion in this layer. Everything renders in its final
+ * state instantly. */
+
+@media (prefers-reduced-motion: reduce) {
+  .js-reveals [data-reveal],
+  .js-reveals [data-reveal].is-revealed {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  .js-reveals .section-divider::after {
+    transform: scaleX(1);
+    transition: none;
+  }
+
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
+  }
+}

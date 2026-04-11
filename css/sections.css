@@ -16,7 +16,9 @@
   .section { padding-block: var(--space-8); }
 }
 
-/* Subtle hairline separator above each major section (matches Anthropic-style restraint) */
+/* Subtle hairline separator above each major section. The static
+   border-top is the no-JS fallback; motion.css replaces it with an
+   animated ::after that draws from left when the section enters view. */
 .section-divider {
   border-top: 1px solid var(--color-border);
 }
@@ -310,7 +312,9 @@
 .capability-card:focus-within {
   transform: translateY(-2px);
   border-color: var(--color-border-strong);
-  box-shadow: 0 8px 24px rgba(31, 51, 86, 0.08);
+  box-shadow:
+    inset 3px 0 0 var(--color-gold),
+    0 8px 24px rgba(31, 51, 86, 0.08);
 }
 
 .capability-card-icon {
@@ -318,6 +322,12 @@
   height: 32px;
   color: var(--color-navy);
   margin-bottom: var(--space-4);
+  transition: color 240ms var(--ease-smooth);
+}
+
+.capability-card:hover .capability-card-icon,
+.capability-card:focus-within .capability-card-icon {
+  color: var(--color-gold);
 }
 
 .capability-card-name {

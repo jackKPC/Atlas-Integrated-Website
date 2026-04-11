@@ -48,10 +48,6 @@
     var elements = document.querySelectorAll('[data-reveal]');
     if (!elements.length) return;
 
-    /* Mark <html> as JS-enabled so the CSS hides reveal elements until they intersect.
-       Without this class, elements stay visible (no-JS fallback). */
-    document.documentElement.classList.add('js-reveals');
-
     if (typeof IntersectionObserver !== 'function') {
       elements.forEach(function (el) { el.classList.add('is-revealed'); });
       return;
@@ -66,6 +62,9 @@
       groups[groupKey]++;
     });
 
+    /* Fire early: positive bottom rootMargin means elements start
+       animating while they're still ~40% of the viewport BELOW the
+       fold. By the time the user scrolls to them, the fade is done. */
     var obs = new IntersectionObserver(function (entries) {
       entries.forEach(function (entry) {
         if (entry.isIntersecting) {
@@ -73,9 +72,35 @@
           obs.unobserve(entry.target);
         }
       });
-    }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+    }, { threshold: 0, rootMargin: '0px 0px 40% 0px' });
 
     elements.forEach(function (el) { obs.observe(el); });
+  }
+
+  /* ---- Section divider grow-in ----------------------------------------
+   * Watches each .section-divider and adds .is-divider-in when the top
+   * edge enters view, which triggers the motion layer's ::after scaleX
+   * transition. */
+
+  function initDividerReveals() {
+    var dividers = document.querySelectorAll('.section-divider');
+    if (!dividers.length) return;
+
+    if (typeof IntersectionObserver !== 'function') {
+      dividers.forEach(function (el) { el.classList.add('is-divider-in'); });
+      return;
+    }
+
+    var obs = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-divider-in');
+          obs.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0, rootMargin: '0px 0px 30% 0px' });
+
+    dividers.forEach(function (el) { obs.observe(el); });
   }
 
   /* ---- Mobile navigation overlay --------------------------------------- */
@@ -230,6 +255,20 @@
     var STEP_DEG = 360 / COUNT;
     var VISUAL_CYCLE_MS = 20000; // perceived rotation period (75% faster than the prior 35s)
 
+    /* Intro rotation: during the CSS slide-into-place window the globe
+       sweeps a full 360° with an ease-out curve that mirrors
+       --ease-cinematic. Timings match the CSS tokens: 600ms hold,
+       1800ms slide. Afterwards, meridian rotation continues at the
+       normal steady rate so the globe keeps spinning perpetually. */
+    var INTRO_START_MS = 600;
+    var INTRO_DURATION_MS = 1800;
+    var INTRO_ROTATION_DEG = 180;
+    var STEADY_DEG_PER_MS = STEP_DEG / VISUAL_CYCLE_MS;
+
+    function easeOutCubic(t) {
+      return 1 - Math.pow(1 - t, 3);
+    }
+
     function setPath(el, lonDeg) {
       var lonRad = (lonDeg % 360) * Math.PI / 180;
       var sinLon = Math.sin(lonRad);
@@ -262,8 +301,19 @@
     function tick(timestamp) {
       if (startTime === null) startTime = timestamp;
       var elapsed = timestamp - startTime;
-      var progress = (elapsed % VISUAL_CYCLE_MS) / VISUAL_CYCLE_MS;
-      updateAll(progress * STEP_DEG);
+
+      var rotation;
+      if (elapsed < INTRO_START_MS) {
+        rotation = 0;
+      } else if (elapsed < INTRO_START_MS + INTRO_DURATION_MS) {
+        var introT = (elapsed - INTRO_START_MS) / INTRO_DURATION_MS;
+        rotation = easeOutCubic(introT) * INTRO_ROTATION_DEG;
+      } else {
+        var steadyElapsed = elapsed - (INTRO_START_MS + INTRO_DURATION_MS);
+        rotation = INTRO_ROTATION_DEG + steadyElapsed * STEADY_DEG_PER_MS;
+      }
+
+      updateAll(rotation);
       requestAnimationFrame(tick);
     }
     requestAnimationFrame(tick);
@@ -272,13 +322,19 @@
   /* ---- Boot ------------------------------------------------------------ */
 
   function boot() {
+    /* Gate the motion layer: CSS scopes all reveal/divider animations
+       under .js-reveals so unsupported environments keep the no-JS
+       static fallback. */
+    document.documentElement.classList.add('js-reveals');
+
     initNavScroll();
     initNavOverlay();
     initReducedMotionGuard();
     initDemoForm();
     initFooterYear();
     initGlobeMeridians();
-    /* initScrollReveals disabled — only the hero has motion animations. */
+    initScrollReveals();
+    initDividerReveals();
   }
 
   if (document.readyState === 'loading') {

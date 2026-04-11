@@ -83,7 +83,9 @@
 
 .onboarding-step:hover {
   border-color: var(--color-border-strong);
-  box-shadow: 0 12px 32px rgba(31, 51, 86, 0.06);
+  box-shadow:
+    inset 3px 0 0 var(--color-gold),
+    0 12px 32px rgba(31, 51, 86, 0.06);
 }
 
 .onboarding-number {

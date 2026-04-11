@@ -113,6 +113,7 @@
   transition:
     background-color 200ms var(--ease-smooth),
     color 200ms var(--ease-smooth),
+    box-shadow 220ms var(--ease-smooth),
     transform 180ms var(--ease-card);
   white-space: nowrap;
 }
@@ -124,6 +125,7 @@
 }
 .btn-primary:hover {
   background: var(--btn-primary-bg-hover);
+  box-shadow: 0 0 0 4px oklch(70% 0.10 80 / 0.18);
 }
 .btn-primary:active {
   transform: translateY(1px);

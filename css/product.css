@@ -142,7 +142,9 @@
 
 .capability-detail:hover {
   border-color: var(--color-border-strong);
-  box-shadow: 0 12px 32px rgba(31, 51, 86, 0.06);
+  box-shadow:
+    inset 3px 0 0 var(--color-gold),
+    0 12px 32px rgba(31, 51, 86, 0.06);
 }
 
 .capability-detail-icon {
@@ -155,6 +157,14 @@
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   flex-shrink: 0;
+  transition:
+    color 240ms var(--ease-smooth),
+    border-color 240ms var(--ease-smooth);
+}
+
+.capability-detail:hover .capability-detail-icon {
+  color: var(--color-gold);
+  border-color: var(--color-gold);
 }
 
 .capability-detail-icon svg {
