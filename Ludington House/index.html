@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Ludington House — a historic Connecticut estate hosting weddings, private events, and unforgettable gatherings." />
+  <title>Ludington House — Historic Estate &amp; Event Venue</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+  <link rel="icon" type="image/svg+xml" href="assets/logo.svg" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <!-- ============ NAVIGATION ============ -->
+  <header class="nav" id="nav">
+    <div class="nav__inner">
+      <a href="index.html" class="nav__brand" aria-label="Ludington House Home">
+        <img src="assets/logo.svg" alt="Ludington House" class="nav__logo" />
+        <span class="nav__brandtext">Ludington&nbsp;House</span>
+      </a>
+
+      <nav class="nav__menu" aria-label="Primary">
+        <a href="#about">About</a>
+        <a href="#events">Events</a>
+        <a href="#gallery">Gallery</a>
+        <a href="#testimonials">Stories</a>
+        <a href="#contact">Contact</a>
+      </nav>
+
+      <a href="#contact" class="btn btn--pill nav__cta">Book a Tour</a>
+
+      <button class="nav__toggle" id="navToggle" aria-label="Toggle menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ============ HERO ============ -->
+  <section class="hero">
+    <div class="hero__bg" aria-hidden="true">
+      <div class="hero__grain"></div>
+      <div class="hero__orb hero__orb--1"></div>
+      <div class="hero__orb hero__orb--2"></div>
+      <div class="hero__orb hero__orb--3"></div>
+    </div>
+
+    <div class="hero__content">
+      <p class="eyebrow reveal" data-delay="0">Est. 1894 &middot; Connecticut</p>
+      <h1 class="hero__title reveal" data-delay="100">
+        A historic estate<br />
+        <span class="italic">for moments that matter.</span>
+      </h1>
+      <p class="hero__subtitle reveal" data-delay="200">
+        Weddings, private gatherings, and celebrations set against
+        century-old architecture and twelve acres of manicured gardens.
+      </p>
+      <div class="hero__actions reveal" data-delay="300">
+        <a href="#events" class="btn btn--primary">Explore the Estate</a>
+        <a href="#contact" class="btn btn--ghost">Schedule a Visit <span aria-hidden="true">→</span></a>
+      </div>
+
+      <div class="hero__meta reveal" data-delay="450">
+        <div><strong>12</strong><span>Acres of Gardens</span></div>
+        <div><strong>250</strong><span>Guest Capacity</span></div>
+        <div><strong>1894</strong><span>Est.</span></div>
+      </div>
+    </div>
+
+    <a href="#about" class="hero__scroll" aria-label="Scroll to next section">
+      <span></span>
+    </a>
+  </section>
+
+  <!-- ============ ABOUT ============ -->
+  <section class="section about" id="about">
+    <div class="container grid grid--split">
+      <div class="reveal" data-delay="0">
+        <p class="eyebrow">Our Story</p>
+        <h2 class="h2">Timeless charm,<br />thoughtfully preserved.</h2>
+      </div>
+      <div class="reveal" data-delay="150">
+        <p class="lead">
+          Ludington House is a lovingly restored 19th-century estate nestled
+          in the rolling landscape of Connecticut. For over a century, these
+          halls have welcomed families, friends, and communities for the
+          moments they hold most dear.
+        </p>
+        <p>
+          Today, we host intimate ceremonies, grand receptions, private
+          dinners, and corporate retreats — each tailored to the character of
+          the house and the people inside it.
+        </p>
+        <a href="#events" class="link-arrow">Learn about our spaces <span aria-hidden="true">→</span></a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ EVENTS / SERVICES ============ -->
+  <section class="section events" id="events">
+    <div class="container">
+      <div class="section__head reveal">
+        <p class="eyebrow">What We Host</p>
+        <h2 class="h2">Spaces made for every&nbsp;occasion.</h2>
+      </div>
+
+      <div class="cards">
+        <article class="card reveal" data-delay="0">
+          <div class="card__media card__media--1" aria-hidden="true"></div>
+          <div class="card__body">
+            <h3>Weddings</h3>
+            <p>Ceremonies on the lawn, receptions in the Grand Hall, and every quiet moment in between.</p>
+            <a href="#contact" class="link-arrow">Inquire <span aria-hidden="true">→</span></a>
+          </div>
+        </article>
+
+        <article class="card reveal" data-delay="100">
+          <div class="card__media card__media--2" aria-hidden="true"></div>
+          <div class="card__body">
+            <h3>Private Events</h3>
+            <p>Anniversaries, showers, rehearsal dinners, and milestone celebrations with a personal touch.</p>
+            <a href="#contact" class="link-arrow">Inquire <span aria-hidden="true">→</span></a>
+          </div>
+        </article>
+
+        <article class="card reveal" data-delay="200">
+          <div class="card__media card__media--3" aria-hidden="true"></div>
+          <div class="card__body">
+            <h3>Corporate &amp; Retreats</h3>
+            <p>Off-sites, board dinners, and team retreats in a setting that inspires conversation.</p>
+            <a href="#contact" class="link-arrow">Inquire <span aria-hidden="true">→</span></a>
+          </div>
+        </article>
+
+        <article class="card reveal" data-delay="300">
+          <div class="card__media card__media--4" aria-hidden="true"></div>
+          <div class="card__body">
+            <h3>Garden Tours</h3>
+            <p>Seasonal tours of our twelve-acre grounds, greenhouses, and heirloom gardens.</p>
+            <a href="#contact" class="link-arrow">Inquire <span aria-hidden="true">→</span></a>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ GALLERY ============ -->
+  <section class="section gallery" id="gallery">
+    <div class="container">
+      <div class="section__head reveal">
+        <p class="eyebrow">Gallery</p>
+        <h2 class="h2">A look inside the estate.</h2>
+      </div>
+
+      <div class="bento">
+        <figure class="bento__item bento__item--tall reveal" data-delay="0">
+          <div class="bento__img bento__img--1" aria-hidden="true"></div>
+          <figcaption>The Grand Hall</figcaption>
+        </figure>
+        <figure class="bento__item reveal" data-delay="80">
+          <div class="bento__img bento__img--2" aria-hidden="true"></div>
+          <figcaption>The Conservatory</figcaption>
+        </figure>
+        <figure class="bento__item reveal" data-delay="160">
+          <div class="bento__img bento__img--3" aria-hidden="true"></div>
+          <figcaption>Garden Terrace</figcaption>
+        </figure>
+        <figure class="bento__item bento__item--wide reveal" data-delay="240">
+          <div class="bento__img bento__img--4" aria-hidden="true"></div>
+          <figcaption>The Library</figcaption>
+        </figure>
+        <figure class="bento__item reveal" data-delay="320">
+          <div class="bento__img bento__img--5" aria-hidden="true"></div>
+          <figcaption>The Pergola</figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ TESTIMONIALS ============ -->
+  <section class="section testimonials" id="testimonials">
+    <div class="container">
+      <div class="section__head reveal">
+        <p class="eyebrow">Stories from the House</p>
+        <h2 class="h2">Loved by the people<br />who celebrate here.</h2>
+      </div>
+
+      <div class="quotes">
+        <blockquote class="quote reveal" data-delay="0">
+          <p>“The most magical day we could have imagined. Every detail felt like it had been cared for by people who truly love this house.”</p>
+          <footer>— The Marshall Family</footer>
+        </blockquote>
+        <blockquote class="quote reveal" data-delay="120">
+          <p>“From the gardens to the Grand Hall, every corner tells a story. Our guests are still talking about it months later.”</p>
+          <footer>— Priya &amp; Daniel</footer>
+        </blockquote>
+        <blockquote class="quote reveal" data-delay="240">
+          <p>“A team that treats your event like it's their own. Seamless, warm, and unforgettable.”</p>
+          <footer>— Hartford Arts Council</footer>
+        </blockquote>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CONTACT / CTA ============ -->
+  <section class="section contact" id="contact">
+    <div class="container">
+      <div class="cta reveal">
+        <div class="cta__copy">
+          <p class="eyebrow">Begin the Conversation</p>
+          <h2 class="h2">Let's plan<br />something beautiful.</h2>
+          <p class="lead">Tell us about your event and we'll reach out to schedule a private tour of the estate.</p>
+        </div>
+
+        <form class="form" onsubmit="event.preventDefault(); this.querySelector('.form__success').hidden = false;">
+          <label>
+            <span>Your name</span>
+            <input type="text" required placeholder="Jane Doe" />
+          </label>
+          <label>
+            <span>Email</span>
+            <input type="email" required placeholder="jane@example.com" />
+          </label>
+          <label>
+            <span>Event type</span>
+            <select>
+              <option>Wedding</option>
+              <option>Private Event</option>
+              <option>Corporate / Retreat</option>
+              <option>Garden Tour</option>
+              <option>Other</option>
+            </select>
+          </label>
+          <label class="form__full">
+            <span>Tell us more</span>
+            <textarea rows="4" placeholder="A few details about your event..."></textarea>
+          </label>
+          <button type="submit" class="btn btn--primary form__submit">Send Inquiry</button>
+          <p class="form__success" hidden>Thank you — we'll be in touch shortly.</p>
+        </form>
+      </div>
+
+      <div class="contact__info reveal" data-delay="150">
+        <div>
+          <p class="eyebrow">Visit</p>
+          <p>Ludington House<br />Connecticut, USA</p>
+        </div>
+        <div>
+          <p class="eyebrow">Contact</p>
+          <p>hello@luddingtonhousect.com<br />(860) 000-0000</p>
+        </div>
+        <div>
+          <p class="eyebrow">Hours</p>
+          <p>By appointment<br />Tours Wed–Sun</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FOOTER ============ -->
+  <footer class="footer">
+    <div class="container footer__inner">
+      <div class="footer__brand">
+        <img src="assets/logo.svg" alt="Ludington House" />
+        <p>Ludington House — historic estate &amp; event venue.</p>
+      </div>
+      <nav class="footer__nav" aria-label="Footer">
+        <a href="#about">About</a>
+        <a href="#events">Events</a>
+        <a href="#gallery">Gallery</a>
+        <a href="#contact">Contact</a>
+      </nav>
+      <p class="footer__copy">© <span id="year"></span> Ludington House. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+</body>
+</html>
