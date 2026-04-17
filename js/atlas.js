@@ -605,7 +605,7 @@
     var cards = Array.from(carousel.querySelectorAll('.capability-card'));
     if (!cards.length) return;
 
-    var CURVE_HEIGHT = 25;  /* subtle — no popping, just a gentle arc */
+    var CURVE_HEIGHT = 0;  /* flat — no vertical movement at all */
     var CARD_GAP = 40;
     var CARD_W = 280;
     var SLOT = CARD_W + CARD_GAP;
