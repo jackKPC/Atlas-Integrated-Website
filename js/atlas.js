@@ -593,69 +593,65 @@
    * the arc/curve effect from the user's drawing. */
 
   /* ---- Capabilities carousel: curved arc + auto-scroll ----
-   * Cards arc upward toward the globe (center cards highest, edge
-   * cards lowest, forming a ∪ under the globe). Auto-scrolls slowly.
-   * User horizontal scroll takes over and overrides. */
+   * Cards arc upward toward the globe (∪ curve) and auto-scroll
+   * right-to-left using translateX transforms (not scrollLeft,
+   * which breaks in overflow:hidden containers). */
 
   function initCapabilityCarousel() {
     var carousel = document.querySelector('.capability-carousel');
     if (!carousel) return;
     if (window.innerWidth < 1024) return;
 
-    var cards = carousel.querySelectorAll('.capability-card');
+    var cards = Array.from(carousel.querySelectorAll('.capability-card'));
     if (!cards.length) return;
 
-    var CURVE_HEIGHT = 60;   /* px: center cards lifted this much toward globe */
-    var AUTO_SPEED = 0.4;    /* px per frame */
-    var autoDir = 1;
-    var userActive = false;
-    var userTimer;
+    var CURVE_HEIGHT = 120;
+    var CARD_GAP = 40;
+    var CARD_W = 280;
+    var SLOT = CARD_W + CARD_GAP;
+    var TRACK = cards.length * SLOT;
+    var SPEED = 0.8;
+    var offset = 0;
 
-    function updateCardPositions() {
-      var rect = carousel.getBoundingClientRect();
-      var cx = rect.left + rect.width / 2;
-      var hw = rect.width / 2;
+    function animate() {
+      offset = (offset + SPEED) % TRACK;
 
-      cards.forEach(function (card) {
-        var cr = card.getBoundingClientRect();
-        var cardCx = cr.left + cr.width / 2;
-        var d = Math.max(-1, Math.min(1, (cardCx - cx) / hw));
+      var vw = carousel.getBoundingClientRect().width;
+      var cx = vw / 2;
 
-        /* ∪ curve: center at -CURVE_HEIGHT (up toward globe), edges at 0 */
-        var yOffset = -(1 - d * d) * CURVE_HEIGHT;
-        /* Scale: center 1.0, edges 0.88 */
-        var s = 1 - Math.abs(d) * 0.12;
-        /* Opacity: center 1, edges fade */
-        var op = 1 - Math.abs(d) * 0.4;
+      cards.forEach(function (card, i) {
+        /* Position along the infinite track, wrapping to stay near viewport */
+        var x = ((i * SLOT - offset) % TRACK + TRACK) % TRACK;
+        /* Center the track so cards appear from both sides */
+        x -= TRACK / 2 - cx;
 
-        card.style.transform = 'translateY(' + yOffset.toFixed(1) + 'px) scale(' + s.toFixed(3) + ')';
+        /* Distance from center, normalized to -1..1 over viewport width */
+        var d = (x + CARD_W / 2 - cx) / cx;
+        var clamp = Math.max(-1.5, Math.min(1.5, d));
+
+        /* ∩ curve: edge cards rise toward the globe, center at bottom.
+           Cards wrap around the underside of the globe. */
+        var yOff = 0;
+        if (Math.abs(clamp) <= 1) {
+          yOff = -(clamp * clamp) * CURVE_HEIGHT;
+        }
+
+        /* Scale and opacity based on distance from center */
+        var a = Math.min(1, Math.abs(clamp));
+        var scale = 1 - a * 0.18;
+        var op = Math.max(0, 1 - a * 0.6);
+
+        /* Hide cards that are way off screen */
+        if (Math.abs(clamp) > 1.4) op = 0;
+
+        card.style.transform = 'translateX(' + x.toFixed(0) + 'px) translateY(' + yOff.toFixed(0) + 'px) scale(' + scale.toFixed(3) + ')';
         card.style.opacity = op.toFixed(2);
       });
+
+      requestAnimationFrame(animate);
     }
 
-    function animateLoop() {
-      if (!userActive) {
-        carousel.scrollLeft += AUTO_SPEED * autoDir;
-        var max = carousel.scrollWidth - carousel.clientWidth;
-        if (carousel.scrollLeft >= max - 2) autoDir = -1;
-        if (carousel.scrollLeft <= 2) autoDir = 1;
-      }
-      updateCardPositions();
-      requestAnimationFrame(animateLoop);
-    }
-
-    carousel.addEventListener('scroll', function () {
-      userActive = true;
-      clearTimeout(userTimer);
-      userTimer = setTimeout(function () { userActive = false; }, 2500);
-    }, { passive: true });
-
-    /* Start centered */
-    carousel.scrollLeft = (carousel.scrollWidth - carousel.clientWidth) / 2;
-
-    updateCardPositions();
-    requestAnimationFrame(animateLoop);
-    window.addEventListener('resize', updateCardPositions);
+    requestAnimationFrame(animate);
   }
 
   /* ---- Boot ------------------------------------------------------------ */
