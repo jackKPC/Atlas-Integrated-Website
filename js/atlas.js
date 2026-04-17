@@ -605,7 +605,7 @@
     var cards = Array.from(carousel.querySelectorAll('.capability-card'));
     if (!cards.length) return;
 
-    var CURVE_HEIGHT = 120;
+    var CURVE_HEIGHT = 25;  /* subtle — no popping, just a gentle arc */
     var CARD_GAP = 40;
     var CARD_W = 280;
     var SLOT = CARD_W + CARD_GAP;
@@ -649,11 +649,11 @@
         var d = (x + CARD_W / 2 - cx) / cx;
         var clamp = Math.max(-1.5, Math.min(1.5, d));
 
-        /* ∩ curve: edge cards rise toward the globe, center at bottom.
-           Cards wrap around the underside of the globe. */
+        /* Gentle arc: smooth cosine curve, center slightly lower,
+           edges slightly higher. No sharp transitions. */
         var yOff = 0;
         if (Math.abs(clamp) <= 1) {
-          yOff = -(clamp * clamp) * CURVE_HEIGHT;
+          yOff = (Math.cos(clamp * Math.PI) - 1) * CURVE_HEIGHT / 2;
         }
 
         /* Scale and opacity based on distance from center */
