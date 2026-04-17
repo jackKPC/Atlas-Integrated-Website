@@ -611,7 +611,8 @@
     var SLOT = CARD_W + CARD_GAP;
     var TRACK = cards.length * SLOT;
     var SPEED = 0.8;
-    var offset = 0;
+    /* Start offset so the first visible card is centered, not at position 0 */
+    var offset = TRACK / 4;
 
     function animate() {
       offset = (offset + SPEED) % TRACK;

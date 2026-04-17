@@ -27,7 +27,8 @@
     bottom: 0;
     display: flex !important;
     flex-direction: column !important;
-    justify-content: center !important;
+    /* flex-start so content anchors to top, never clips headline */
+    justify-content: flex-start !important;
     padding-top: 96px !important;
     padding-bottom: 48px !important;
     max-width: none !important;
@@ -59,25 +60,19 @@
     padding-bottom: var(--space-8) !important;
   }
 
-  /* Demo: move navy background to fixed container so it doesn't
-     bleed into Built Different when scrolling */
+  /* Demo: navy background on the fixed container */
   .section-demo {
     background: none !important;
+  }
+  .section-demo::before {
+    display: none !important;
   }
   .section-demo > .container {
     background: var(--color-navy);
     color: var(--color-surface);
-  }
-  .section-demo > .container::before {
-    content: "";
-    position: absolute;
-    top: -30%;
-    left: 50%;
-    width: 900px;
-    height: 900px;
-    transform: translateX(-50%);
-    background: radial-gradient(circle at center, oklch(70% 0.10 80 / 0.10) 0%, transparent 60%);
-    pointer-events: none;
+    justify-content: center !important;
+    left: 0 !important;
+    right: 0 !important;
   }
 
   /* Each section spacer gets a background to block what's below */
@@ -114,6 +109,11 @@
 
   /* ---- Capabilities ---- */
   /* Globe centered upper, header + cards in lower half */
+  .section-capabilities > .container {
+    /* Globe occupies the top ~45%. Content must start below. */
+    padding-top: 48vh !important;
+    justify-content: flex-start !important;
+  }
   .section-capabilities .section-header {
     text-align: center !important;
     margin-inline: auto !important;
