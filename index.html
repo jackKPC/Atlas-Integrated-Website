@@ -22,6 +22,7 @@
   <link rel="stylesheet" href="css/hero.css">
   <link rel="stylesheet" href="css/sections.css">
   <link rel="stylesheet" href="css/motion.css">
+  <link rel="stylesheet" href="css/scroll-snap.css">
 
   <script src="js/atlas.js" defer></script>
 </head>
@@ -103,7 +104,13 @@
           <a class="btn btn-primary btn-lg hero-cta" href="#book-demo">Book a Demo</a>
         </div>
 
-        <div class="hero-globe">
+        <!-- Spacer maintains the grid layout while the globe lives outside -->
+        <div class="hero-globe-spacer" aria-hidden="true"></div>
+      </div>
+    </section>
+
+    <!-- Globe: extracted from the hero grid so it can become position:fixed on scroll -->
+    <div class="hero-globe" id="atlas-globe">
           <div class="globe" role="img" aria-label="Atlas wireframe globe with capability constellation">
 
             <!-- Single SVG: outline + parallels + 12 JS-animated meridian paths -->
@@ -311,7 +318,7 @@
           </div>
         </div>
       </div>
-    </section>
+    </div>
 
     <!-- ============================================================
          SECTION 2: Platform Statement
@@ -319,7 +326,7 @@
          Right column: custom SVG diagram contrasting old fragmented
          workflow with the unified Atlas record.
          ============================================================ -->
-    <section class="section section-platform section-divider" aria-labelledby="platform-title">
+    <section class="section section-platform section-divider" aria-labelledby="platform-title" data-globe-side="left" data-globe-scale="0.80">
       <div class="container">
         <div class="split-2" data-reveal-group="platform">
           <div class="split-text">
@@ -422,7 +429,7 @@
          (full-width navy panel with the secondary slogan).
          9 other capabilities sit in a responsive grid below.
          ============================================================ -->
-    <section class="section section-capabilities section-divider" aria-labelledby="capabilities-title">
+    <section class="section section-capabilities section-divider" aria-labelledby="capabilities-title" data-globe-side="center" data-globe-scale="0.62">
       <div class="container">
         <header class="section-header">
           <span class="section-eyebrow" data-reveal>Capabilities</span>
@@ -456,8 +463,8 @@
           </div>
         </article>
 
-        <!-- Grid of 9 other capabilities -->
-        <div class="capability-grid" data-reveal-group="capabilities">
+        <!-- Horizontal scrolling capability carousel -->
+        <div class="capability-carousel" data-reveal-group="capabilities">
 
           <article class="capability-card" data-reveal tabindex="0">
             <svg class="capability-card-icon" viewBox="0 0 24 24" aria-hidden="true">
@@ -664,7 +671,7 @@
          No icons in colored circles, no bullet lists. Typography and
          structure carry the weight.
          ============================================================ -->
-    <section class="section section-built-different section-divider" aria-labelledby="built-different-title">
+    <section class="section section-built-different section-divider" aria-labelledby="built-different-title" data-globe-side="left" data-globe-scale="0.75">
       <div class="container">
         <header class="section-header">
           <span class="section-eyebrow" data-reveal>Built different</span>
@@ -706,7 +713,7 @@
          client-side validation, transitions to success state without
          a page reload. Brief privacy statement below the form.
          ============================================================ -->
-    <section class="section-demo" id="book-demo" aria-labelledby="demo-title">
+    <section class="section-demo" id="book-demo" aria-labelledby="demo-title" data-globe-side="center" data-globe-scale="0.52" data-globe-fade="true">
       <div class="container container-md">
         <div class="demo-inner">
           <span class="demo-eyebrow" data-reveal>Book a Demo</span>

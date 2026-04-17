@@ -13,7 +13,7 @@
   align-items: center;
   padding-top: var(--space-8);
   padding-bottom: var(--space-6);
-  overflow: hidden;
+  overflow: visible;
 }
 
 .hero-inner {
@@ -120,32 +120,76 @@
   to   { opacity: 1; }
 }
 
+/* ---- Hero globe spacer (maintains grid layout) ---- */
+
+.hero-globe-spacer {
+  width: min(64vw, 58vh, 520px);
+  aspect-ratio: 1 / 1;
+}
+
+@media (min-width: 1024px) {
+  .hero-globe-spacer {
+    width: min(36vw, 60vh, 520px);
+  }
+}
+
 /* ---- Hero globe wrapper ---- */
 
 .hero-globe {
-  position: relative;
+  position: absolute;
   width: min(64vw, 58vh, 520px);
   aspect-ratio: 1 / 1;
-  margin-inline: auto;
   container-type: inline-size;
   overflow: visible;
+  /* Must render above section content but below the nav */
+  z-index: calc(var(--z-nav) - 1);
+  pointer-events: none;
+  will-change: transform, width;
+}
+
+.hero-globe .integration-button {
+  pointer-events: auto;
+}
+
+/* When JS activates scroll-following mode.
+   NO CSS transitions — JS sets position every frame from scrollY. */
+.hero-globe.is-scroll-fixed {
+  position: fixed;
+}
+
+/* Orbital constellation fade is JS-controlled via inline opacity.
+   This transition makes the JS-driven fade smooth. */
+.hero-globe .integrations {
+  transition: opacity 300ms var(--ease-smooth);
 }
 
 @media (min-width: 1024px) {
   .hero-globe {
-    /* Absolute pixel ceiling prevents the globe from outgrowing the
-       hero's clip box when the browser is zoomed below 100% and the
-       layout viewport expands (vh/vw grow, but .hero is clamped to
-       min(100vh, 860px) with overflow: hidden). Without the cap, the
-       orbital constellation gets clipped top and bottom. */
     width: min(36vw, 60vh, 520px);
     transform: translateX(-25vw);
     animation: hero-globe-slide var(--dur-intro) var(--ease-cinematic) var(--intro-hold) forwards;
+  }
+
+  .hero-globe.is-scroll-fixed {
+    animation: none;
+    transform: none;
   }
 }
 
 @keyframes hero-globe-slide {
   to { transform: translateX(0); }
+}
+
+@media (max-width: 1023px) {
+  /* On mobile, globe stays in document flow above the hero text */
+  .hero-globe {
+    position: relative;
+    margin-inline: auto;
+    order: -1;
+  }
+  .hero-globe-spacer {
+    display: none;
+  }
 }
 
 /* ---- The 3D globe scene ---- */

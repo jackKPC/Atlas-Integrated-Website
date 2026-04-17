@@ -840,3 +840,5 @@
   text-decoration: underline;
   text-underline-offset: 3px;
 }
+
+/* Globe-aware layout is handled entirely by scroll-snap.css */

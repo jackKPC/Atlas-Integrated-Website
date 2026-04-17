@@ -62,17 +62,28 @@
       groups[groupKey]++;
     });
 
-    /* Fire early: positive bottom rootMargin means elements start
-       animating while they're still ~40% of the viewport BELOW the
-       fold. By the time the user scrolls to them, the fade is done. */
+    /* Reveals fire early (40% below fold) but if the element is inside
+       a globe-lane section, add a delay so the globe settles into its
+       lane before the content appears. The 700ms matches the globe
+       CSS transition duration. */
+    var GLOBE_SETTLE_MS = 700;
+
     var obs = new IntersectionObserver(function (entries) {
       entries.forEach(function (entry) {
         if (entry.isIntersecting) {
-          entry.target.classList.add('is-revealed');
+          var section = entry.target.closest('[data-globe-side]');
+          if (section) {
+            /* Delay reveal so globe reaches its lane first */
+            setTimeout(function () {
+              entry.target.classList.add('is-revealed');
+            }, GLOBE_SETTLE_MS);
+          } else {
+            entry.target.classList.add('is-revealed');
+          }
           obs.unobserve(entry.target);
         }
       });
-    }, { threshold: 0, rootMargin: '0px 0px 40% 0px' });
+    }, { threshold: 0, rootMargin: '0px 0px 20% 0px' });
 
     elements.forEach(function (el) { obs.observe(el); });
   }
@@ -297,10 +308,22 @@
     var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (reducedMotion) return;
 
+    /* Scroll-velocity-driven rotation: base spin + scroll boost.
+       Scrolling adds extra rotation proportional to scroll speed. */
+    var lastScrollY = window.scrollY;
+    var scrollBoost = 0; /* accumulated extra degrees from scrolling */
+    var SCROLL_ROTATION_FACTOR = 0.15; /* degrees per pixel scrolled */
+
     var startTime = null;
     function tick(timestamp) {
       if (startTime === null) startTime = timestamp;
       var elapsed = timestamp - startTime;
+
+      /* Track scroll velocity and accumulate rotation boost */
+      var currentScrollY = window.scrollY;
+      var scrollDelta = currentScrollY - lastScrollY;
+      scrollBoost += scrollDelta * SCROLL_ROTATION_FACTOR;
+      lastScrollY = currentScrollY;
 
       var rotation;
       if (elapsed < INTRO_START_MS) {
@@ -310,13 +333,329 @@
         rotation = easeOutCubic(introT) * INTRO_ROTATION_DEG;
       } else {
         var steadyElapsed = elapsed - (INTRO_START_MS + INTRO_DURATION_MS);
-        rotation = INTRO_ROTATION_DEG + steadyElapsed * STEADY_DEG_PER_MS;
+        rotation = INTRO_ROTATION_DEG + steadyElapsed * STEADY_DEG_PER_MS + scrollBoost;
       }
 
       updateAll(rotation);
       requestAnimationFrame(tick);
     }
     requestAnimationFrame(tick);
+  }
+
+  /* ---- Scroll-driven globe + content ------------------------------------
+   * Every visual state is a PURE FUNCTION of scrollY.
+   * No CSS transitions. No timeouts. No "settled" classes.
+   *
+   * The scroll range is divided into zones:
+   *   [section-visible zone]  content at full opacity, globe stationary
+   *   [transition zone]       content fading, globe sliding horizontally
+   *
+   * Globe left/top/width/opacity are set directly every frame.
+   * Content container opacity is set directly every frame.
+   */
+
+  function initGlobeScroll() {
+    var globe = document.getElementById('atlas-globe');
+    var hero = document.querySelector('.hero');
+    var spacer = document.querySelector('.hero-globe-spacer');
+    if (!globe || !hero || !spacer) return;
+
+    if (window.innerWidth < 1024) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    var heroText = document.querySelector('.hero-text');
+    var integrations = globe.querySelector('.integrations');
+    var vw = window.innerWidth;
+    var vh = window.innerHeight;
+
+    /* ---- Build the keyframe timeline from DOM sections ---- */
+    var TRANSITION_PX = 200; /* scroll pixels for each transition zone */
+
+    function laneLeft(side, w) {
+      if (side === 'left')   return (vw * 0.42 - w) / 2;
+      if (side === 'right')  return vw * 0.58 + (vw * 0.42 - w) / 2;
+      return (vw - w) / 2; /* center */
+    }
+    function laneTop(side) {
+      return side === 'center' ? vh * 0.08 : vh * 0.18;
+    }
+
+    /* Read the hero's resting globe position */
+    function heroGlobeRect() {
+      var saved = window.scrollY;
+      if (saved > 10) { window.scrollTo(0, 0); }
+      var sr = spacer.getBoundingClientRect();
+      if (saved > 10) { window.scrollTo(0, saved); }
+      return { top: sr.top, left: sr.left, width: sr.width };
+    }
+
+    var heroRect = heroGlobeRect();
+
+    /* Build keyframes: each section produces a "hold" zone + a transition.
+       Format: { scroll, left, top, width, opacity } */
+    function buildKeyframes() {
+      vw = window.innerWidth;
+      vh = window.innerHeight;
+      heroRect = heroGlobeRect();
+
+      var sectionEls = document.querySelectorAll('[data-globe-side]');
+      var kf = [];
+
+      /* Hero hold */
+      kf.push({ s: 0, l: heroRect.left, t: heroRect.top, w: heroRect.width, o: 1 });
+
+      var heroBottom = hero.offsetTop + hero.offsetHeight;
+      kf.push({ s: heroBottom - TRANSITION_PX, l: heroRect.left, t: heroRect.top, w: heroRect.width, o: 1 });
+
+      /* Each section: transition-in → hold → transition-out */
+      sectionEls.forEach(function (el) {
+        var side  = el.dataset.globeSide;
+        var scale = parseFloat(el.dataset.globeScale) || 0.6;
+        var fade  = el.dataset.globeFade === 'true';
+        var secTop = el.offsetTop;
+        var secBot = secTop + el.offsetHeight;
+        var gw = heroRect.width * scale;
+
+        /* Transition arrives at section top */
+        kf.push({ s: secTop, l: laneLeft(side, gw), t: laneTop(side), w: gw, o: fade ? 0 : 1 });
+        /* Hold through the section */
+        kf.push({ s: secBot - TRANSITION_PX, l: laneLeft(side, gw), t: laneTop(side), w: gw, o: fade ? 0 : 1 });
+      });
+
+      return kf;
+    }
+
+    var keyframes = buildKeyframes();
+
+    /* ---- Interpolate between keyframes ---- */
+    function lerp(a, b, t) { return a + (b - a) * t; }
+
+    function globeStateAt(scrollY) {
+      if (scrollY <= keyframes[0].s) return keyframes[0];
+      if (scrollY >= keyframes[keyframes.length - 1].s) return keyframes[keyframes.length - 1];
+      for (var i = 0; i < keyframes.length - 1; i++) {
+        var a = keyframes[i], b = keyframes[i + 1];
+        if (scrollY >= a.s && scrollY <= b.s) {
+          var range = b.s - a.s;
+          var t = range > 0 ? (scrollY - a.s) / range : 0;
+          /* Linear interpolation — scroll position IS the timing.
+             Mild smoothstep to avoid hard start/stop. */
+          t = t * t * (3 - 2 * t);
+          return {
+            l: lerp(a.l, b.l, t),
+            t: lerp(a.t, b.t, t),
+            w: lerp(a.w, b.w, t),
+            o: lerp(a.o, b.o, t)
+          };
+        }
+      }
+      return keyframes[keyframes.length - 1];
+    }
+
+    /* ---- Content opacity per section ----
+     * Each section's .container fades: 0 during transition, 1 during hold.
+     * Fade-in over the first TRANSITION_PX of the section.
+     * Fade-out over the last TRANSITION_PX. */
+    var sectionContainers = [];
+    document.querySelectorAll('[data-globe-side]').forEach(function (el) {
+      var cont = el.querySelector('.container');
+      if (cont) sectionContainers.push({ el: el, cont: cont });
+    });
+
+    function contentOpacityAt(scrollY, secEl) {
+      var top = secEl.offsetTop;
+      var bot = top + secEl.offsetHeight;
+      /* Content fades in DURING the globe transition (which ends at
+         secTop). Content is fully visible by the time the globe arrives.
+         Fades out over the last TRANSITION_PX before the next section. */
+      var fadeInStart  = top - TRANSITION_PX;
+      var fadeInEnd    = top;
+      var fadeOutStart = bot - TRANSITION_PX;
+
+      if (scrollY < fadeInStart || scrollY > bot) return 0;
+      if (scrollY < fadeInEnd) return (scrollY - fadeInStart) / TRANSITION_PX;
+      if (scrollY > fadeOutStart) return (bot - scrollY) / TRANSITION_PX;
+      return 1;
+    }
+
+    /* ---- Init: pin the globe ---- */
+    var introComplete = false;
+
+    function pinGlobe() {
+      globe.style.position = 'fixed';
+      globe.style.animation = 'none';
+      globe.style.transform = 'none';
+      globe.classList.add('is-scroll-fixed');
+      introComplete = true;
+    }
+
+    /* Position over spacer initially (absolute) */
+    globe.style.position = 'absolute';
+    globe.style.top = (heroRect.top + window.scrollY) + 'px';
+    globe.style.left = heroRect.left + 'px';
+    globe.style.width = heroRect.width + 'px';
+
+    function handleRefresh() {
+      /* Called when we detect scroll position > 100 (browser restored
+         scroll after refresh). Skip intro, pin immediately. */
+      pinGlobe();
+      var scrollY = window.scrollY;
+      var st = globeStateAt(scrollY);
+      globe.style.top = st.t + 'px';
+      globe.style.left = st.l + 'px';
+      globe.style.width = st.w + 'px';
+      globe.style.opacity = String(st.o);
+      if (heroText) heroText.style.opacity = '0';
+      if (integrations) { integrations.style.opacity = '0'; integrations.style.pointerEvents = 'none'; }
+      sectionContainers.forEach(function (sc) {
+        sc.cont.style.opacity = String(contentOpacityAt(scrollY, sc.el));
+      });
+    }
+
+    if (window.scrollY > 100) {
+      handleRefresh();
+    } else {
+      /* Normal load from top: wait for intro animation */
+      setTimeout(function () {
+        if (window.scrollY > 100) {
+          /* User scrolled during the intro — handle like refresh */
+          handleRefresh();
+        } else {
+          heroRect = heroGlobeRect();
+          globe.style.top = heroRect.top + 'px';
+          globe.style.left = heroRect.left + 'px';
+          globe.style.width = heroRect.width + 'px';
+          pinGlobe();
+        }
+      }, 2600);
+
+      /* Also watch for scroll restoration that happens after DOMContentLoaded */
+      /* Check for scroll restoration after DOMContentLoaded */
+      setTimeout(function () {
+        if (!introComplete && window.scrollY > 100) {
+          handleRefresh();
+        }
+      }, 200);
+    }
+
+    /* ---- Scroll loop ---- */
+    var ticking = false;
+    function onScroll() {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(function () {
+        ticking = false;
+        if (!introComplete) return;
+        var scrollY = window.scrollY;
+
+        /* Globe position (pure function of scrollY) */
+        var gs = globeStateAt(scrollY);
+        window._lastGlobeDebug = { scrollY: scrollY, gs: gs, kfCount: keyframes.length, intro: introComplete };
+        globe.style.top  = gs.t + 'px';
+        globe.style.left = gs.l + 'px';
+        globe.style.width = gs.w + 'px';
+        globe.style.opacity = String(Math.max(0, Math.min(1, gs.o)));
+
+        /* Hero text fade */
+        if (heroText) {
+          heroText.style.opacity = String(Math.max(0, 1 - scrollY / 400));
+        }
+
+        /* Orbital constellation */
+        if (integrations) {
+          var co = scrollY < 50 ? 1 : Math.max(0, 1 - (scrollY - 50) / 200);
+          integrations.style.opacity = String(co);
+          integrations.style.pointerEvents = co < 0.3 ? 'none' : '';
+        }
+
+        /* Content opacity per section */
+        sectionContainers.forEach(function (sc) {
+          var op = Math.max(0, Math.min(1, contentOpacityAt(scrollY, sc.el)));
+          sc.cont.style.opacity = String(op);
+          sc.cont.style.pointerEvents = op > 0.5 ? 'auto' : 'none';
+        });
+      });
+    }
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', function () {
+      keyframes = buildKeyframes();
+      if (introComplete) onScroll();
+    });
+
+    /* Fire once to set initial state */
+    onScroll();
+  }
+
+  /* ---- Capability carousel curve ----------------------------------------
+   * Cards in .capability-carousel get a vertical offset based on their
+   * distance from the horizontal center of the scroll container, creating
+   * the arc/curve effect from the user's drawing. */
+
+  /* ---- Capabilities carousel: curved arc + auto-scroll ----
+   * Cards arc upward toward the globe (center cards highest, edge
+   * cards lowest, forming a ∪ under the globe). Auto-scrolls slowly.
+   * User horizontal scroll takes over and overrides. */
+
+  function initCapabilityCarousel() {
+    var carousel = document.querySelector('.capability-carousel');
+    if (!carousel) return;
+    if (window.innerWidth < 1024) return;
+
+    var cards = carousel.querySelectorAll('.capability-card');
+    if (!cards.length) return;
+
+    var CURVE_HEIGHT = 60;   /* px: center cards lifted this much toward globe */
+    var AUTO_SPEED = 0.4;    /* px per frame */
+    var autoDir = 1;
+    var userActive = false;
+    var userTimer;
+
+    function updateCardPositions() {
+      var rect = carousel.getBoundingClientRect();
+      var cx = rect.left + rect.width / 2;
+      var hw = rect.width / 2;
+
+      cards.forEach(function (card) {
+        var cr = card.getBoundingClientRect();
+        var cardCx = cr.left + cr.width / 2;
+        var d = Math.max(-1, Math.min(1, (cardCx - cx) / hw));
+
+        /* ∪ curve: center at -CURVE_HEIGHT (up toward globe), edges at 0 */
+        var yOffset = -(1 - d * d) * CURVE_HEIGHT;
+        /* Scale: center 1.0, edges 0.88 */
+        var s = 1 - Math.abs(d) * 0.12;
+        /* Opacity: center 1, edges fade */
+        var op = 1 - Math.abs(d) * 0.4;
+
+        card.style.transform = 'translateY(' + yOffset.toFixed(1) + 'px) scale(' + s.toFixed(3) + ')';
+        card.style.opacity = op.toFixed(2);
+      });
+    }
+
+    function animateLoop() {
+      if (!userActive) {
+        carousel.scrollLeft += AUTO_SPEED * autoDir;
+        var max = carousel.scrollWidth - carousel.clientWidth;
+        if (carousel.scrollLeft >= max - 2) autoDir = -1;
+        if (carousel.scrollLeft <= 2) autoDir = 1;
+      }
+      updateCardPositions();
+      requestAnimationFrame(animateLoop);
+    }
+
+    carousel.addEventListener('scroll', function () {
+      userActive = true;
+      clearTimeout(userTimer);
+      userTimer = setTimeout(function () { userActive = false; }, 2500);
+    }, { passive: true });
+
+    /* Start centered */
+    carousel.scrollLeft = (carousel.scrollWidth - carousel.clientWidth) / 2;
+
+    updateCardPositions();
+    requestAnimationFrame(animateLoop);
+    window.addEventListener('resize', updateCardPositions);
   }
 
   /* ---- Boot ------------------------------------------------------------ */
@@ -335,6 +674,8 @@
     initGlobeMeridians();
     initScrollReveals();
     initDividerReveals();
+    initGlobeScroll();
+    initCapabilityCarousel();
   }
 
   if (document.readyState === 'loading') {

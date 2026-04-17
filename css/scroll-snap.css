@@ -1,0 +1,153 @@
+/* ============================================================
+   Atlas Integrated — Scroll-driven layout
+   ============================================================
+   Globe + section content are ALL position:fixed overlays.
+   Sections in the DOM provide scrollable height only.
+   JS maps scrollY → globe position + content opacity.
+   Desktop only (≥1024px).
+   ============================================================ */
+
+@media (min-width: 1024px) {
+
+  /* ---- Sections: height spacers with breathing room ---- */
+  [data-globe-side] {
+    min-height: 120vh;
+    position: relative;
+    border-top: none !important;
+  }
+  [data-globe-side]::before,
+  [data-globe-side]::after {
+    display: none !important;
+  }
+
+  /* ---- Section containers: fixed overlays ---- */
+  [data-globe-side] > .container {
+    position: fixed !important;
+    top: 0;
+    bottom: 0;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    padding-top: 96px !important; /* nav + breathing room */
+    padding-bottom: var(--space-8) !important;
+    max-width: none !important;
+    width: auto !important;
+    margin: 0 !important;
+    z-index: 5;
+    /* Start invisible — JS sets opacity based on scrollY */
+    opacity: 0;
+  }
+
+  /* Globe LEFT → content on the RIGHT */
+  [data-globe-side="left"] > .container {
+    left: 44vw !important;
+    right: var(--gutter) !important;
+  }
+
+  /* Globe RIGHT → content on the LEFT */
+  [data-globe-side="right"] > .container {
+    left: var(--gutter) !important;
+    right: 44vw !important;
+  }
+
+  /* Globe CENTER → content below globe */
+  [data-globe-side="center"] > .container {
+    left: var(--gutter) !important;
+    right: var(--gutter) !important;
+    justify-content: flex-end !important;
+    padding-top: 0 !important;
+    padding-bottom: var(--space-8) !important;
+  }
+
+  /* Demo: move navy background to fixed container so it doesn't
+     bleed into Built Different when scrolling */
+  .section-demo {
+    background: none !important;
+  }
+  .section-demo > .container {
+    background: var(--color-navy);
+    color: var(--color-surface);
+  }
+  .section-demo > .container::before {
+    content: "";
+    position: absolute;
+    top: -30%;
+    left: 50%;
+    width: 900px;
+    height: 900px;
+    transform: translateX(-50%);
+    background: radial-gradient(circle at center, oklch(70% 0.10 80 / 0.10) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  /* Each section spacer gets a background to block what's below */
+  [data-globe-side] {
+    background: var(--bg-page);
+  }
+
+  /* ---- Section-specific overrides ---- */
+
+  /* Platform: single-column */
+  [data-globe-side] .split-2 {
+    grid-template-columns: 1fr !important;
+    gap: var(--space-5);
+  }
+
+  /* Section headers: left-align in side lanes */
+  [data-globe-side="left"] .section-header,
+  [data-globe-side="right"] .section-header {
+    text-align: left;
+    margin-inline: 0;
+    max-width: none;
+  }
+  [data-globe-side="left"] .section-header .section-headline,
+  [data-globe-side="left"] .section-header .section-lede,
+  [data-globe-side="right"] .section-header .section-headline,
+  [data-globe-side="right"] .section-header .section-lede {
+    margin-inline: 0;
+  }
+
+  /* Built Different: fill the lane */
+  [data-globe-side] .differentiator-grid {
+    max-width: none;
+  }
+
+  /* ---- Capabilities ---- */
+  /* Globe centered upper, header + cards in lower half */
+  .section-capabilities .section-header {
+    text-align: center !important;
+    margin-inline: auto !important;
+    max-width: 760px !important;
+    margin-bottom: var(--space-3);
+  }
+  .section-capabilities .section-headline {
+    font-size: clamp(1.75rem, 3vw, 2.5rem);
+    margin-bottom: var(--space-2);
+  }
+  .section-capabilities .section-lede {
+    display: none;
+  }
+  .section-capabilities .capability-feature {
+    display: none;
+  }
+
+  /* Capability carousel: horizontal flex, cards on curved arc */
+  .capability-carousel {
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    display: flex;
+    gap: var(--space-5);
+    padding: var(--space-3) var(--gutter) var(--space-4);
+  }
+  .capability-carousel::-webkit-scrollbar {
+    display: none;
+  }
+  .capability-carousel .capability-card {
+    flex: 0 0 300px;
+    min-width: 260px;
+  }
+
+} /* end 1024px */
