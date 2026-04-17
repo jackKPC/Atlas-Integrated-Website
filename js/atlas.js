@@ -312,7 +312,7 @@
        Scrolling adds extra rotation proportional to scroll speed. */
     var lastScrollY = window.scrollY;
     var scrollBoost = 0; /* accumulated extra degrees from scrolling */
-    var SCROLL_ROTATION_FACTOR = 0.15; /* degrees per pixel scrolled */
+    var SCROLL_ROTATION_FACTOR = 0.075; /* degrees per pixel scrolled */
 
     var startTime = null;
     function tick(timestamp) {
@@ -376,17 +376,25 @@
       if (side === 'right')  return vw * 0.58 + (vw * 0.42 - w) / 2;
       return (vw - w) / 2; /* center */
     }
-    function laneTop(side) {
-      return side === 'center' ? vh * 0.08 : vh * 0.18;
+    function laneTop(side, globeWidth) {
+      if (side === 'center') return 80; /* below the nav, never clipped */
+      /* Vertically center the globe in the viewport (accounting for nav) */
+      var navHeight = 64;
+      return navHeight + (vh - navHeight - globeWidth) / 2;
     }
 
     /* Read the hero's resting globe position */
     function heroGlobeRect() {
-      var saved = window.scrollY;
-      if (saved > 10) { window.scrollTo(0, 0); }
+      /* Compute the spacer's viewport position at scroll=0 without
+         actually scrolling. getBoundingClientRect gives viewport-relative
+         coords; adding scrollY gives the absolute page position, which
+         equals the viewport position when scrollY is 0. */
       var sr = spacer.getBoundingClientRect();
-      if (saved > 10) { window.scrollTo(0, saved); }
-      return { top: sr.top, left: sr.left, width: sr.width };
+      return {
+        top: sr.top + window.scrollY,
+        left: sr.left,
+        width: sr.width
+      };
     }
 
     var heroRect = heroGlobeRect();
@@ -417,9 +425,9 @@
         var gw = heroRect.width * scale;
 
         /* Transition arrives at section top */
-        kf.push({ s: secTop, l: laneLeft(side, gw), t: laneTop(side), w: gw, o: fade ? 0 : 1 });
+        kf.push({ s: secTop, l: laneLeft(side, gw), t: laneTop(side, gw), w: gw, o: fade ? 0 : 1 });
         /* Hold through the section */
-        kf.push({ s: secBot - TRANSITION_PX, l: laneLeft(side, gw), t: laneTop(side), w: gw, o: fade ? 0 : 1 });
+        kf.push({ s: secBot - TRANSITION_PX, l: laneLeft(side, gw), t: laneTop(side, gw), w: gw, o: fade ? 0 : 1 });
       });
 
       return kf;
@@ -610,7 +618,7 @@
     var CARD_W = 280;
     var SLOT = CARD_W + CARD_GAP;
     var TRACK = cards.length * SLOT;
-    var SPEED = 0.8;
+    var SPEED = 0.25;
     var offset = 0;
     var wasVisible = false;
 
@@ -633,7 +641,7 @@
       }
 
       /* Speed up entry, then settle to normal pace */
-      var currentSpeed = offset < 0 ? SPEED * 6 : SPEED;
+      var currentSpeed = offset < 0 ? SPEED * 3 : SPEED;
       offset = (offset + currentSpeed) % TRACK;
 
       var vw = carousel.getBoundingClientRect().width;

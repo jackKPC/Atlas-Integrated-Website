@@ -29,7 +29,7 @@
     flex-direction: column !important;
     /* flex-start so content anchors to top, never clips headline */
     justify-content: flex-start !important;
-    padding-top: 80px !important;
+    padding-top: 120px !important;
     padding-bottom: 24px !important;
     max-width: none !important;
     width: auto !important;
@@ -75,6 +75,9 @@
     right: 0 !important;
     padding-top: 64px !important;
     padding-bottom: 24px !important;
+    /* Don't cover the footer */
+    bottom: auto !important;
+    height: 100vh;
   }
   /* Compact the demo form to fit viewport */
   .section-demo .demo-form {
@@ -96,10 +99,23 @@
 
   /* ---- Section-specific overrides ---- */
 
-  /* Platform: single-column */
+  /* Platform: single-column, compact to fit viewport */
   [data-globe-side] .split-2 {
     grid-template-columns: 1fr !important;
-    gap: var(--space-5);
+    gap: var(--space-3);
+  }
+  [data-globe-side] .split-text .section-headline {
+    font-size: clamp(1.75rem, 3vw, 2.5rem);
+    margin-bottom: var(--space-2);
+  }
+  [data-globe-side] .split-text .section-body {
+    font-size: var(--fs-body-sm);
+  }
+  [data-globe-side] .split-text .section-body + .section-body {
+    margin-top: var(--space-2);
+  }
+  [data-globe-side] .workflow-diagram {
+    max-width: 480px;
   }
 
   /* Section headers: left-align in side lanes */
@@ -175,6 +191,12 @@
     /* Override the section.css transition — JS sets transform every frame */
     transition: none !important;
     will-change: transform, opacity;
+  }
+
+  /* Footer must render above the fixed containers */
+  .site-footer {
+    position: relative;
+    z-index: 10;
   }
 
 } /* end 1024px */

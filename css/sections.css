@@ -699,8 +699,8 @@
    ============================================================ */
 
 .site-footer {
-  background: var(--color-navy);
-  color: var(--color-surface);
+  background: var(--bg-page);
+  color: var(--fg-body);
   padding-block: var(--space-9) var(--space-5);
 }
 
@@ -709,7 +709,7 @@
   grid-template-columns: 1fr;
   gap: var(--space-7);
   padding-bottom: var(--space-7);
-  border-bottom: 1px solid rgba(247, 244, 236, 0.12);
+  border-bottom: 1px solid var(--color-border);
 }
 
 @media (min-width: 768px) {
@@ -723,7 +723,7 @@
   display: inline-flex;
   align-items: center;
   gap: 12px;
-  color: var(--color-surface);
+  color: var(--color-navy);
   margin-bottom: var(--space-4);
   transition: opacity 200ms var(--ease-smooth);
 }
@@ -748,8 +748,7 @@
   font-family: var(--font-display);
   font-size: var(--fs-body-lg);
   line-height: var(--lh-snug);
-  color: var(--color-surface);
-  opacity: 0.72;
+  color: var(--fg-muted);
   max-width: 32ch;
   margin: 0;
 }
@@ -773,7 +772,7 @@
   font-size: var(--fs-body);
 }
 .footer-links a {
-  color: var(--color-surface);
+  color: var(--fg-body);
   opacity: 0.82;
   transition: opacity 200ms var(--ease-smooth);
 }
@@ -785,7 +784,7 @@
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
-  color: var(--color-surface);
+  color: var(--fg-body);
   font-family: var(--font-body);
   font-size: var(--fs-body);
   opacity: 0.82;
@@ -811,8 +810,7 @@
   padding-top: var(--space-5);
   font-family: var(--font-body);
   font-size: var(--fs-caption);
-  color: var(--color-surface);
-  opacity: 0.55;
+  color: var(--fg-muted);
   letter-spacing: var(--tracking-caption);
 }
 
