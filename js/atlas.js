@@ -611,10 +611,26 @@
     var SLOT = CARD_W + CARD_GAP;
     var TRACK = cards.length * SLOT;
     var SPEED = 0.8;
-    /* Start offset so the first visible card is centered, not at position 0 */
-    var offset = TRACK / 4;
+    var offset = 0;
+    var wasVisible = false;
 
     function animate() {
+      /* Only animate when the capabilities section container is visible */
+      var cont = carousel.closest('.container');
+      var isVisible = cont && parseFloat(cont.style.opacity || '0') > 0.3;
+
+      if (!isVisible) {
+        wasVisible = false;
+        requestAnimationFrame(animate);
+        return;
+      }
+
+      /* Reset offset on first visible frame so cards start centered */
+      if (!wasVisible) {
+        offset = 0;
+        wasVisible = true;
+      }
+
       offset = (offset + SPEED) % TRACK;
 
       var vw = carousel.getBoundingClientRect().width;
