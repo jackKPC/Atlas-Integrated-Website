@@ -625,13 +625,16 @@
         return;
       }
 
-      /* Reset offset on first visible frame so cards start centered */
+      /* On first visible frame, start offset so all cards are off
+         the RIGHT edge. They'll scroll in naturally from right to left. */
       if (!wasVisible) {
-        offset = 0;
+        offset = -TRACK;
         wasVisible = true;
       }
 
-      offset = (offset + SPEED) % TRACK;
+      /* Speed up entry, then settle to normal pace */
+      var currentSpeed = offset < 0 ? SPEED * 6 : SPEED;
+      offset = (offset + currentSpeed) % TRACK;
 
       var vw = carousel.getBoundingClientRect().width;
       var cx = vw / 2;
