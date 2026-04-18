@@ -1,12 +1,29 @@
 /* ============================================================
    Atlas Integrated — Demo Modal
    ============================================================
-   Fullscreen overlay triggered by any Book a Demo button.
-   Navy background with centered form card. On homepage, the
-   existing globe animates to the center foreground. On other
-   pages, a standalone globe fades in with the modal.
+   Centered eggshell dialog that sits above a blurred page.
+   The real wireframe globe (#atlas-globe) animates into
+   position next to the card and keeps rotating as decoration.
    ============================================================ */
 
+/* Backdrop: blurs the page behind the modal */
+.demo-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 198;
+  background: rgba(247, 244, 236, 0.35);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 400ms var(--ease-cinematic);
+}
+.demo-modal-backdrop[data-open="true"] {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Centered dialog container */
 .demo-modal {
   position: fixed;
   inset: 0;
@@ -14,46 +31,46 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  opacity: 0;
   pointer-events: none;
-  background: var(--color-navy);
-  transition: opacity 400ms var(--ease-cinematic);
+  padding: var(--space-4);
 }
-
 .demo-modal[data-open="true"] {
-  opacity: 1;
   pointer-events: auto;
 }
 
+/* The dialog card itself */
 .demo-modal-card {
   position: relative;
-  z-index: 2;
-  width: min(560px, 92vw);
+  width: min(520px, 100%);
+  max-height: 90vh;
+  overflow: auto;
   padding: var(--space-8) var(--space-7);
-  background: rgba(247, 244, 236, 0.06);
-  border: 1px solid rgba(247, 244, 236, 0.18);
+  background: var(--bg-page);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  color: var(--color-surface);
-  transform: translateY(20px);
-  transition: transform 500ms var(--ease-cinematic);
+  box-shadow: 0 32px 80px rgba(31, 51, 86, 0.18);
+  color: var(--fg-body);
+  opacity: 0;
+  transform: translateY(20px) scale(0.96);
+  transition:
+    opacity 400ms var(--ease-cinematic),
+    transform 500ms var(--ease-cinematic);
 }
-
 .demo-modal[data-open="true"] .demo-modal-card {
-  transform: translateY(0);
+  opacity: 1;
+  transform: translateY(0) scale(1);
 }
 
 .demo-modal-close {
   position: absolute;
   top: var(--space-4);
   right: var(--space-4);
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   border-radius: var(--radius-pill);
-  border: 1px solid rgba(247, 244, 236, 0.18);
+  border: 1px solid var(--color-border);
   background: transparent;
-  color: var(--color-surface);
+  color: var(--fg-body);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -61,15 +78,15 @@
   transition: border-color 200ms var(--ease-smooth), background 200ms var(--ease-smooth);
 }
 .demo-modal-close:hover {
-  border-color: var(--color-gold);
-  background: rgba(247, 244, 236, 0.04);
+  border-color: var(--color-navy);
+  background: rgba(31, 51, 86, 0.04);
 }
 .demo-modal-close svg {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   stroke: currentColor;
   fill: none;
-  stroke-width: 1.6;
+  stroke-width: 1.8;
   stroke-linecap: round;
 }
 
@@ -86,23 +103,23 @@
 
 .demo-modal-title {
   font-family: var(--font-display);
-  font-size: clamp(1.75rem, 3.2vw, 2.5rem);
+  font-size: clamp(1.625rem, 2.8vw, 2rem);
   font-weight: var(--fw-semi);
   line-height: var(--lh-tight);
   letter-spacing: var(--tracking-display-tight);
+  color: var(--fg-body);
   margin: 0 0 var(--space-3);
-  color: var(--color-surface);
 }
 
 .demo-modal-lede {
   font-family: var(--font-body);
   font-size: var(--fs-body);
   line-height: var(--lh-body);
-  color: var(--color-surface);
-  opacity: 0.75;
-  margin: 0 0 var(--space-6);
+  color: var(--fg-muted);
+  margin: 0 0 var(--space-5);
 }
 
+/* Form inside the eggshell modal: light theme */
 .demo-modal .demo-form {
   padding: 0;
   background: none;
@@ -110,36 +127,56 @@
   backdrop-filter: none;
   gap: var(--space-4);
 }
+.demo-modal .demo-label {
+  color: var(--fg-muted);
+  opacity: 1;
+}
+.demo-modal .demo-input {
+  background: rgba(31, 51, 86, 0.04);
+  border: 1px solid var(--color-border);
+  color: var(--fg-body);
+}
+.demo-modal .demo-input::placeholder { color: var(--fg-faint); }
+.demo-modal .demo-input:hover { border-color: var(--color-border-strong); }
+.demo-modal .demo-input:focus,
+.demo-modal .demo-input:focus-visible {
+  border-color: var(--color-gold);
+  background: rgba(31, 51, 86, 0.05);
+  box-shadow: 0 0 0 3px oklch(70% 0.10 80 / 0.18);
+}
 
-/* Backdrop globe (other pages where no fixed globe exists) */
-.demo-modal-globe {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  pointer-events: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  transition: opacity 600ms var(--ease-cinematic) 200ms;
-}
-.demo-modal[data-open="true"] .demo-modal-globe {
-  opacity: 0.28;
-}
-.demo-modal-globe svg {
-  width: min(620px, 70vw);
-  height: auto;
+.demo-modal .demo-submit {
+  background: var(--color-navy);
   color: var(--color-surface);
 }
+.demo-modal .demo-submit:hover {
+  background: var(--btn-primary-bg-hover);
+  box-shadow: 0 0 0 4px oklch(70% 0.10 80 / 0.18);
+}
 
-/* Success state inside modal */
 .demo-modal .demo-success {
   background: transparent;
   border: none;
   padding: var(--space-6) 0;
+  color: var(--fg-body);
+}
+.demo-modal .demo-success-title { color: var(--fg-body); }
+.demo-modal .demo-success-body { color: var(--fg-muted); opacity: 1; }
+
+/* Hide the snippet's inline backdrop-globe (we use the real one) */
+.demo-modal-globe { display: none !important; }
+
+/* When modal is open, the real globe moves to the side of the card.
+   JS sets inline top/left/width; CSS just handles the transition. */
+.hero-globe.in-modal {
+  transition:
+    top 500ms var(--ease-cinematic),
+    left 500ms var(--ease-cinematic),
+    width 500ms var(--ease-cinematic);
+  z-index: 199; /* above backdrop, below modal card */
 }
 
-/* Prevent body scroll when modal is open */
+/* Body scroll lock */
 body.demo-modal-open {
   overflow: hidden;
 }

@@ -689,6 +689,7 @@
 
   function initDemoModal() {
     var modal = document.getElementById('demo-modal');
+    var backdrop = document.getElementById('demo-modal-backdrop');
     if (!modal) return;
 
     var form = modal.querySelector('#demo-modal-form');
@@ -697,31 +698,86 @@
     var emailInput = modal.querySelector('#demo-modal-email');
     var nameError = modal.querySelector('#demo-modal-name-error');
     var emailError = modal.querySelector('#demo-modal-email-error');
+    var card = modal.querySelector('.demo-modal-card');
+    var globe = document.getElementById('atlas-globe');
     var EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     var lastFocus = null;
+    var savedGlobe = null;
+
+    function moveGlobeToModal() {
+      if (!globe || !card) return;
+      /* Capture current inline styles so we can restore them on close */
+      savedGlobe = {
+        top: globe.style.top,
+        left: globe.style.left,
+        width: globe.style.width,
+        opacity: globe.style.opacity
+      };
+      globe.classList.add('in-modal');
+
+      /* Target position: to the LEFT of the modal card, same vertical center.
+         Globe sits as a decorative element beside the form. */
+      var cardRect = card.getBoundingClientRect();
+      var vw = window.innerWidth;
+      var vh = window.innerHeight;
+      /* Globe fits in the left margin beside the card, if room; otherwise
+         it sits behind the card at reduced opacity */
+      var leftMargin = cardRect.left;
+      var targetSize, targetLeft, targetTop;
+      if (leftMargin > 340) {
+        /* Enough room for globe beside the card */
+        targetSize = Math.min(leftMargin - 40, 280);
+        targetLeft = (leftMargin - targetSize) / 2;
+        targetTop = cardRect.top + (cardRect.height - targetSize) / 2;
+      } else {
+        /* Fallback: float behind the card, faded */
+        targetSize = Math.min(vw * 0.4, 400);
+        targetLeft = (vw - targetSize) / 2;
+        targetTop = (vh - targetSize) / 2;
+      }
+      globe.style.top = targetTop + 'px';
+      globe.style.left = targetLeft + 'px';
+      globe.style.width = targetSize + 'px';
+      globe.style.opacity = '1';
+    }
+
+    function restoreGlobe() {
+      if (!globe || !savedGlobe) return;
+      globe.classList.remove('in-modal');
+      globe.style.top = savedGlobe.top;
+      globe.style.left = savedGlobe.left;
+      globe.style.width = savedGlobe.width;
+      globe.style.opacity = savedGlobe.opacity;
+      savedGlobe = null;
+      /* Let the scroll handler recompute position */
+      window.dispatchEvent(new Event('scroll'));
+    }
 
     function open() {
       lastFocus = document.activeElement;
       modal.setAttribute('data-open', 'true');
       modal.setAttribute('aria-hidden', 'false');
+      if (backdrop) backdrop.setAttribute('data-open', 'true');
       document.body.classList.add('demo-modal-open');
-      /* Reset form state */
       if (form) { form.hidden = false; form.reset && form.reset(); }
       if (success) success.hidden = true;
       if (nameError) nameError.textContent = '';
       if (emailError) emailError.textContent = '';
       if (nameInput) nameInput.removeAttribute('aria-invalid');
       if (emailInput) emailInput.removeAttribute('aria-invalid');
-      /* Focus the first input after the fade-in */
+      /* After the card animates in, move the globe to its side */
       setTimeout(function () {
         if (nameInput) nameInput.focus();
-      }, 400);
+        moveGlobeToModal();
+      }, 350);
     }
 
     function close() {
       modal.setAttribute('data-open', 'false');
       modal.setAttribute('aria-hidden', 'true');
+      if (backdrop) backdrop.setAttribute('data-open', 'false');
       document.body.classList.remove('demo-modal-open');
+      restoreGlobe();
       if (lastFocus && typeof lastFocus.focus === 'function') {
         setTimeout(function () { lastFocus.focus(); }, 100);
       }
@@ -735,8 +791,8 @@
         open();
       } else if (e.target.closest('[data-modal-close]')) {
         close();
-      } else if (e.target === modal) {
-        /* Backdrop click */
+      } else if (e.target === modal || e.target === backdrop) {
+        /* Backdrop or modal edge click */
         close();
       }
     });
