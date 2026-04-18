@@ -682,6 +682,106 @@
     requestAnimationFrame(animate);
   }
 
+  /* ---- Book a Demo modal ------------------------------------------------
+   * Any link or button with href="#book-demo" or "/#book-demo" opens
+   * the modal. The modal has its own form; validation mirrors the
+   * inline demo form. */
+
+  function initDemoModal() {
+    var modal = document.getElementById('demo-modal');
+    if (!modal) return;
+
+    var form = modal.querySelector('#demo-modal-form');
+    var success = modal.querySelector('#demo-modal-success');
+    var nameInput = modal.querySelector('#demo-modal-name');
+    var emailInput = modal.querySelector('#demo-modal-email');
+    var nameError = modal.querySelector('#demo-modal-name-error');
+    var emailError = modal.querySelector('#demo-modal-email-error');
+    var EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    var lastFocus = null;
+
+    function open() {
+      lastFocus = document.activeElement;
+      modal.setAttribute('data-open', 'true');
+      modal.setAttribute('aria-hidden', 'false');
+      document.body.classList.add('demo-modal-open');
+      /* Reset form state */
+      if (form) { form.hidden = false; form.reset && form.reset(); }
+      if (success) success.hidden = true;
+      if (nameError) nameError.textContent = '';
+      if (emailError) emailError.textContent = '';
+      if (nameInput) nameInput.removeAttribute('aria-invalid');
+      if (emailInput) emailInput.removeAttribute('aria-invalid');
+      /* Focus the first input after the fade-in */
+      setTimeout(function () {
+        if (nameInput) nameInput.focus();
+      }, 400);
+    }
+
+    function close() {
+      modal.setAttribute('data-open', 'false');
+      modal.setAttribute('aria-hidden', 'true');
+      document.body.classList.remove('demo-modal-open');
+      if (lastFocus && typeof lastFocus.focus === 'function') {
+        setTimeout(function () { lastFocus.focus(); }, 100);
+      }
+    }
+
+    /* Intercept any Book a Demo link */
+    document.addEventListener('click', function (e) {
+      var link = e.target.closest('a[href$="#book-demo"], a[href="#book-demo"]');
+      if (link) {
+        e.preventDefault();
+        open();
+      } else if (e.target.closest('[data-modal-close]')) {
+        close();
+      } else if (e.target === modal) {
+        /* Backdrop click */
+        close();
+      }
+    });
+
+    /* ESC to close */
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && modal.getAttribute('data-open') === 'true') {
+        close();
+      }
+    });
+
+    /* Form validation (mirrors the inline form) */
+    if (!form) return;
+
+    function setErr(input, errEl, msg) {
+      if (msg) { input.setAttribute('aria-invalid', 'true'); errEl.textContent = msg; }
+      else { input.removeAttribute('aria-invalid'); errEl.textContent = ''; }
+    }
+    function validName() {
+      var v = nameInput.value.trim();
+      if (!v) { setErr(nameInput, nameError, 'Please enter your name.'); return false; }
+      setErr(nameInput, nameError, ''); return true;
+    }
+    function validEmail() {
+      var v = emailInput.value.trim();
+      if (!v) { setErr(emailInput, emailError, 'Please enter your work email.'); return false; }
+      if (!EMAIL_RE.test(v)) { setErr(emailInput, emailError, 'That doesn\u2019t look like a valid email.'); return false; }
+      setErr(emailInput, emailError, ''); return true;
+    }
+    nameInput.addEventListener('blur', validName);
+    emailInput.addEventListener('blur', validEmail);
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var ok = validName() && validEmail();
+      if (!ok) return;
+      if (typeof console !== 'undefined' && console.info) {
+        console.info('[atlas] demo modal submit', { name: nameInput.value.trim(), email: emailInput.value.trim() });
+      }
+      form.hidden = true;
+      success.hidden = false;
+      success.focus();
+    });
+  }
+
   /* ---- Boot ------------------------------------------------------------ */
 
   function boot() {
@@ -700,6 +800,7 @@
     initDividerReveals();
     initGlobeScroll();
     initCapabilityCarousel();
+    initDemoModal();
   }
 
   if (document.readyState === 'loading') {

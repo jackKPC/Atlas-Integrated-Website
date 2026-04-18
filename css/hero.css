@@ -315,8 +315,8 @@
   border: 1.5px solid var(--color-border-strong);
   border-radius: var(--radius-pill);
   color: var(--stroke-globe);
-  cursor: pointer;
-  pointer-events: auto;
+  cursor: default;
+  pointer-events: none;
   transition:
     transform 200ms var(--ease-card),
     border-color 200ms var(--ease-smooth),

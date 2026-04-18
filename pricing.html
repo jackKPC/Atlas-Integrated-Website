@@ -23,6 +23,7 @@
   <link rel="stylesheet" href="css/product.css">
   <link rel="stylesheet" href="css/pricing.css">
   <link rel="stylesheet" href="css/motion.css">
+  <link rel="stylesheet" href="css/demo-modal.css">
 
   <script src="js/atlas.js" defer></script>
 </head>
@@ -276,5 +277,52 @@
       </div>
     </div>
   </footer>
+
+  <!-- Book a Demo Modal -->
+  <div class="demo-modal" id="demo-modal" role="dialog" aria-modal="true" aria-labelledby="demo-modal-title" aria-hidden="true">
+    <div class="demo-modal-globe" aria-hidden="true">
+      <svg viewBox="0 0 28 28">
+        <g stroke="currentColor" fill="none" stroke-width="0.4" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke">
+          <circle cx="14" cy="14" r="10"/>
+          <ellipse cx="14" cy="14" rx="4" ry="10"/>
+          <line x1="14" y1="3" x2="14" y2="25"/>
+          <line x1="4" y1="14" x2="24" y2="14"/>
+        </g>
+      </svg>
+    </div>
+    <div class="demo-modal-card">
+      <button class="demo-modal-close" type="button" aria-label="Close" data-modal-close>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M 6 6 L 18 18 M 18 6 L 6 18"/></svg>
+      </button>
+      <span class="demo-modal-eyebrow">Book a Demo</span>
+      <h2 id="demo-modal-title" class="demo-modal-title">Bring Atlas to your firm.</h2>
+      <p class="demo-modal-lede">A short conversation, a walkthrough, and a path to onboarding your team.</p>
+      <form class="demo-form" id="demo-modal-form" novalidate>
+        <div class="demo-field">
+          <label for="demo-modal-name" class="demo-label">Name</label>
+          <input id="demo-modal-name" class="demo-input" type="text" name="name" autocomplete="name" placeholder="Jane Partner" required aria-describedby="demo-modal-name-error">
+          <span id="demo-modal-name-error" class="demo-error" role="alert"></span>
+        </div>
+        <div class="demo-field">
+          <label for="demo-modal-email" class="demo-label">Work email</label>
+          <input id="demo-modal-email" class="demo-input" type="email" name="email" autocomplete="email" placeholder="jane@firm.com" required aria-describedby="demo-modal-email-error">
+          <span id="demo-modal-email-error" class="demo-error" role="alert"></span>
+        </div>
+        <button type="submit" class="demo-submit">
+          <span>Book a Demo</span>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M 5 12 L 19 12"/><path d="M 13 6 L 19 12 L 13 18"/></svg>
+        </button>
+      </form>
+      <div class="demo-success" id="demo-modal-success" hidden aria-live="polite" tabindex="-1">
+        <svg class="demo-success-mark" viewBox="0 0 48 48" aria-hidden="true">
+          <circle cx="24" cy="24" r="22" fill="none" stroke="currentColor" stroke-width="1.8"/>
+          <path d="M 14 24 L 21 31 L 34 17" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <h3 class="demo-success-title">Thank you.</h3>
+        <p class="demo-success-body">We&rsquo;ll reach out within one business day.</p>
+      </div>
+    </div>
+  </div>
 </body>
+
 </html>
