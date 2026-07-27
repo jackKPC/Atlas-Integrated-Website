@@ -76,7 +76,8 @@ async function handleTutor(req, res) {
     }
 
     if (!upstream.ok) {
-      console.error(`[tutor] upstream ${upstream.status}: ${JSON.stringify(data)}`);
+      const keyPreview = `length=${apiKey.length} prefix=${JSON.stringify(apiKey.slice(0, 12))} suffix=${JSON.stringify(apiKey.slice(-4))}`;
+      console.error(`[tutor] upstream ${upstream.status}: ${JSON.stringify(data)} | key ${keyPreview}`);
       sendJson(res, 502, { error: "upstream error" });
       return;
     }
