@@ -8,7 +8,8 @@
   },
   "scripts": {
     "start": "node server.js",
-    "build:ccna2": "node scripts/build-ccna2.mjs"
+    "build:ccna2": "node scripts/build-ccna2.mjs",
+    "build:ccna3": "node scripts/build-ccna3.mjs"
   },
   "dependencies": {
     "playwright": "^1.59.1",
