@@ -35,6 +35,7 @@ async function handleTutor(req, res) {
 
   const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) {
+    console.error("[tutor] OPENROUTER_API_KEY is not set");
     sendJson(res, 500, { error: "tutor is not configured" });
     return;
   }
@@ -65,15 +66,25 @@ async function handleTutor(req, res) {
       body: JSON.stringify({ model: OPENROUTER_MODEL, messages, max_tokens: 1000 }),
     });
 
-    const data = await upstream.json();
+    let data;
+    try {
+      data = await upstream.json();
+    } catch (parseErr) {
+      console.error(`[tutor] upstream ${upstream.status}, non-JSON body: ${parseErr.message}`);
+      sendJson(res, 502, { error: "upstream error" });
+      return;
+    }
+
     if (!upstream.ok) {
+      console.error(`[tutor] upstream ${upstream.status}: ${JSON.stringify(data)}`);
       sendJson(res, 502, { error: "upstream error" });
       return;
     }
 
     const text = data.choices?.[0]?.message?.content || "";
     sendJson(res, 200, { text });
-  } catch {
+  } catch (err) {
+    console.error(`[tutor] request failed: ${err.message}`);
     sendJson(res, 502, { error: "upstream request failed" });
   }
 }
