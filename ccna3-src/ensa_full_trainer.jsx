@@ -778,15 +778,19 @@ function mixHex(a, b, t) {
 
 function DiaFlowChain({ nodes = [], loopBackTo = null, color = "violet" }) {
   const col = diaColor(color);
+  // Longer chains wrap unpredictably in a horizontal flex row (the connector
+  // before a wrap point ends up pointing at nothing) — lay those out as a
+  // single vertical column with downward connectors instead, which never wraps.
+  const vertical = nodes.length > 5;
   return (
-    <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 4, justifyContent: "center", padding: "8px 4px" }}>
+    <div style={{ display: "flex", flexDirection: vertical ? "column" : "row", flexWrap: vertical ? "nowrap" : "wrap", alignItems: "center", gap: 4, justifyContent: "center", padding: "8px 4px" }}>
       {nodes.map((n, i) => (
-        <div key={i} style={{ display: "flex", alignItems: "center", gap: 4 }}>
-          <div style={{ minWidth: 92, textAlign: "center", padding: "10px 12px", borderRadius: 12, background: "#fff", border: "1.5px solid " + col, boxShadow: `0 6px 18px -10px ${col}88` }}>
+        <div key={i} style={{ display: "flex", flexDirection: vertical ? "column" : "row", alignItems: "center", gap: 4 }}>
+          <div style={{ minWidth: vertical ? 200 : 92, textAlign: "center", padding: "10px 12px", borderRadius: 12, background: "#fff", border: "1.5px solid " + col, boxShadow: `0 6px 18px -10px ${col}88` }}>
             <div style={{ fontFamily: HEAD, fontWeight: 700, fontSize: 13.5, color: C.ink }}>{n.label}</div>
             {n.sub && <div style={{ fontFamily: BODY, fontSize: 10.5, color: C.dim, marginTop: 2 }}>{n.sub}</div>}
           </div>
-          {i < nodes.length - 1 && <div style={{ fontSize: 18, color: col, fontWeight: 700 }}>→</div>}
+          {i < nodes.length - 1 && <div style={{ fontSize: 18, color: col, fontWeight: 700 }}>{vertical ? "↓" : "→"}</div>}
         </div>
       ))}
       {loopBackTo != null && nodes[loopBackTo] && (
@@ -825,17 +829,16 @@ function DiaTopology({ nodes = [], links = [] }) {
     const col = i % cols, row = Math.floor(i / cols);
     pos[node.id] = { x: (W / (cols + 1)) * (col + 1), y: (H / (rows + 1)) * (row + 1) };
   });
+  // Label anchor is biased toward the "from" node (not the exact midpoint) so
+  // labels on edges that share a hub/destination node (star topologies) don't
+  // stack on top of each other at the shared point.
+  const labelPos = (a, b) => ({ x: a.x + (b.x - a.x) * 0.36, y: a.y + (b.y - a.y) * 0.36 - 8 });
   return (
     <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", height: H, display: "block" }}>
       {links.map((l, i) => {
         const a = pos[l.from], b = pos[l.to];
         if (!a || !b) return null;
-        return (
-          <g key={i}>
-            <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke={C.line} strokeWidth="2" strokeDasharray={l.style === "dashed" ? "5 5" : "none"} />
-            {l.label && <text x={(a.x + b.x) / 2} y={(a.y + b.y) / 2 - 6} fill={C.dim} fontSize="10" fontFamily={MONO} textAnchor="middle">{l.label}</text>}
-          </g>
-        );
+        return <line key={i} x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke={C.line} strokeWidth="2" strokeDasharray={l.style === "dashed" ? "5 5" : "none"} />;
       })}
       {nodes.map((node) => {
         const p = pos[node.id]; if (!p) return null;
@@ -845,6 +848,19 @@ function DiaTopology({ nodes = [], links = [] }) {
             <rect x={p.x - 32} y={p.y - 20} width="64" height="40" rx="10" fill="#fff" stroke={col} strokeWidth="1.6" />
             <text x={p.x} y={p.y - 3} fill={col} fontSize="12" fontFamily={HEAD} fontWeight="700" textAnchor="middle">{DIA_KIND_GLYPH[node.kind] || "?"}</text>
             <text x={p.x} y={p.y + 13} fill={C.ink} fontSize="10" fontFamily={BODY} textAnchor="middle">{node.label}</text>
+          </g>
+        );
+      })}
+      {/* labels render last so they always sit on top of nodes/links, with a background pill for legibility */}
+      {links.map((l, i) => {
+        const a = pos[l.from], b = pos[l.to];
+        if (!a || !b || !l.label) return null;
+        const lp = labelPos(a, b);
+        const w = Math.min(150, Math.max(28, l.label.length * 5.1));
+        return (
+          <g key={"lbl" + i}>
+            <rect x={lp.x - w / 2} y={lp.y - 9} width={w} height={14} rx={4} fill="#fff" opacity="0.94" stroke={C.line} strokeWidth="0.5" />
+            <text x={lp.x} y={lp.y + 1.5} fill={C.dim} fontSize="9" fontFamily={MONO} textAnchor="middle">{l.label}</text>
           </g>
         );
       })}
@@ -1045,6 +1061,7 @@ export default function ENSATrainer() {
   const [slideDir, setSlideDir] = useState(1);
 
   useEffect(() => { saveProgress({ prog, answered, correct }); }, [prog, answered, correct]);
+  useEffect(() => { window.scrollTo(0, 0); }, [view, teachMi]);
 
   const openTeach = (mi) => { setTeachMi(mi); setSlideIdx(0); setSlideDir(1); resetTutor(); };
 
@@ -1245,7 +1262,7 @@ export default function ENSATrainer() {
           {slides.length > 0 && (
             <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>
               {slides.map((_, i) => (
-                <button key={i} onClick={() => goSlide(i)} style={{ flex: 1, height: 5, borderRadius: 999, border: "none", cursor: "pointer", padding: 0, background: i <= slideIdx ? (simple ? "#2563eb" : "linear-gradient(90deg,#2563eb,#eab308)") : C.well }} />
+                <button key={i} onClick={() => goSlide(i)} style={{ flex: 1, height: 5, borderRadius: 999, border: i <= slideIdx ? "none" : "1px solid " + C.line, cursor: "pointer", padding: 0, background: i <= slideIdx ? (simple ? "#2563eb" : "linear-gradient(90deg,#2563eb,#eab308)") : "#dbe4f0" }} />
               ))}
             </div>
           )}
