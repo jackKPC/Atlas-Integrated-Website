@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useContext, createContext } from "react";
+import { useState, useEffect, useRef, useContext, createContext, useMemo } from "react";
 import DATA from "./data/ccna3-data.json";
 
 // ══ HOLO palette — light, futuristic ══
@@ -41,6 +41,9 @@ function useGlobalStyle() {
       @keyframes draw-path { to{stroke-dashoffset:0} }
       @keyframes pulse-op { 0%,100%{opacity:.35} 50%{opacity:.85} }
       @keyframes card-in { from{opacity:0; transform:translateY(10px)} to{opacity:1; transform:translateY(0)} }
+      @keyframes grid-drift { from{background-position:0 0, 0 0} to{background-position:46px 46px, 46px 46px} }
+      @keyframes sweep { 0%{left:-35%} 55%{left:130%} 100%{left:130%} }
+      @keyframes particle-rise { 0%{transform:translateY(0); opacity:0} 10%{opacity:.65} 88%{opacity:.5} 100%{transform:translateY(-105vh); opacity:0} }
       @media (max-width: 760px) { .wire-deco { display:none !important; } }
       ::selection { background: rgba(124,58,237,.25); }
       .qhtml img { max-width: 100%; height: auto; display: block; margin: 12px 0; border-radius: 12px; border: 1px solid ${C.line}; box-shadow: 0 10px 30px -14px rgba(76,29,149,.35); }
@@ -76,8 +79,8 @@ function stripHtml(html) {
 // ══════════════════════════════════════════════════════════
 function WireGlobe({ style, size = 190, color = C.violet, dur = 60 }) {
   return (
-    <svg className="wire-deco" viewBox="0 0 200 200" width={size} height={size}
-      style={{ position: "absolute", opacity: .16, pointerEvents: "none", animation: `spin-slow ${dur}s linear infinite`, ...style }}>
+    <svg viewBox="0 0 200 200" width={size} height={size}
+      style={{ display: "block", opacity: .16, pointerEvents: "none", animation: `spin-slow ${dur}s linear infinite`, ...style }}>
       <circle cx="100" cy="100" r="90" fill="none" stroke={color} strokeWidth="1" />
       <ellipse cx="100" cy="100" rx="90" ry="28" fill="none" stroke={color} strokeWidth="1" />
       <ellipse cx="100" cy="100" rx="90" ry="58" fill="none" stroke={color} strokeWidth="1" />
@@ -90,8 +93,8 @@ function WireGlobe({ style, size = 190, color = C.violet, dur = 60 }) {
 }
 function WireHex({ style, size = 140, color = C.cyan }) {
   return (
-    <svg className="wire-deco" viewBox="0 0 140 140" width={size} height={size}
-      style={{ position: "absolute", opacity: .16, pointerEvents: "none", animation: "float-y 8s ease-in-out infinite", ...style }}>
+    <svg viewBox="0 0 140 140" width={size} height={size}
+      style={{ display: "block", opacity: .16, pointerEvents: "none", animation: "float-y 8s ease-in-out infinite", ...style }}>
       <polygon points="70,4 132,38 132,102 70,136 8,102 8,38" fill="none" stroke={color} strokeWidth="1.4" />
       <polygon points="70,24 112,48 112,92 70,116 28,92 28,48" fill="none" stroke={color} strokeWidth="1" />
       <line x1="70" y1="4" x2="70" y2="136" stroke={color} strokeWidth=".7" />
@@ -102,8 +105,8 @@ function WireHex({ style, size = 140, color = C.cyan }) {
 }
 function WireOrbit({ style, size = 170, color = C.magenta }) {
   return (
-    <svg className="wire-deco" viewBox="0 0 160 160" width={size} height={size}
-      style={{ position: "absolute", opacity: .18, pointerEvents: "none", ...style }}>
+    <svg viewBox="0 0 160 160" width={size} height={size}
+      style={{ display: "block", opacity: .18, pointerEvents: "none", ...style }}>
       <circle cx="80" cy="80" r="70" fill="none" stroke={color} strokeWidth="1" strokeDasharray="4 6" />
       <circle cx="80" cy="80" r="45" fill="none" stroke={color} strokeWidth="1" strokeDasharray="2 5" />
       <circle cx="80" cy="80" r="3" fill={color} />
@@ -114,37 +117,120 @@ function WireOrbit({ style, size = 170, color = C.magenta }) {
 }
 function WireCircuit({ style, w = 220, h = 120, color = C.violet }) {
   return (
-    <svg className="wire-deco" viewBox={`0 0 ${w} ${h}`} width={w} height={h}
-      style={{ position: "absolute", opacity: .16, pointerEvents: "none", ...style }}>
+    <svg viewBox={`0 0 ${w} ${h}`} width={w} height={h}
+      style={{ display: "block", opacity: .16, pointerEvents: "none", ...style }}>
       <path d="M4 60 H50 V20 H110 V90 H160 V50 H216" fill="none" stroke={color} strokeWidth="1.4" strokeDasharray="6 6" strokeDashoffset="240" style={{ animation: "draw-path 4s linear infinite" }} />
       {[[50, 60], [110, 20], [110, 90], [160, 50]].map(([x, y], i) => <circle key={i} cx={x} cy={y} r="3.4" fill={color} style={{ animation: "pulse-op 2.4s ease-in-out infinite" }} />)}
     </svg>
   );
 }
+
+// ══════════════════════════════════════════════════════════
+//  PARALLAX — self-contained scroll + mouse driven translate,
+//  applied via direct ref mutation (no re-renders on scroll).
+// ══════════════════════════════════════════════════════════
+function ParallaxLayer({ children, style, scrollFactor = 0, mouseFactor = 0 }) {
+  const ref = useRef(null);
+  useEffect(() => {
+    let raf = null, mx = 0, my = 0;
+    const apply = () => {
+      raf = null;
+      const sy = window.scrollY || 0;
+      const ty = sy * scrollFactor + my * mouseFactor;
+      const tx = mx * mouseFactor;
+      if (ref.current) ref.current.style.transform = `translate(${tx}px, ${ty}px)`;
+    };
+    const schedule = () => { if (raf == null) raf = requestAnimationFrame(apply); };
+    const onScroll = () => schedule();
+    const onMove = (e) => { mx = (e.clientX / window.innerWidth - .5) * 2; my = (e.clientY / window.innerHeight - .5) * 2; schedule(); };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("mousemove", onMove, { passive: true });
+    apply();
+    return () => { window.removeEventListener("scroll", onScroll); window.removeEventListener("mousemove", onMove); if (raf != null) cancelAnimationFrame(raf); };
+  }, [scrollFactor, mouseFactor]);
+  return <div ref={ref} className="wire-deco" style={{ position: "absolute", willChange: "transform", ...style }}>{children}</div>;
+}
+
+function Particles({ count = 16 }) {
+  const seeds = useMemo(() => Array.from({ length: count }, () => ({
+    left: Math.random() * 100, delay: Math.random() * 8, dur: 6 + Math.random() * 7,
+    size: 2 + Math.random() * 3, hue: [C.violet, C.cyan, C.magenta][Math.floor(Math.random() * 3)],
+  })), [count]);
+  return (
+    <>
+      {seeds.map((s, i) => (
+        <div key={i} style={{
+          position: "absolute", left: s.left + "%", bottom: -20, width: s.size, height: s.size, borderRadius: "50%",
+          background: s.hue, opacity: 0, boxShadow: `0 0 6px ${s.hue}`,
+          animation: `particle-rise ${s.dur}s linear ${s.delay}s infinite`,
+        }} />
+      ))}
+    </>
+  );
+}
+
 function BackgroundArt({ variant }) {
   if (variant === "home") {
     return (
       <>
-        <WireGlobe style={{ top: -40, right: -50 }} size={220} />
-        <WireHex style={{ top: 260, left: -40 }} size={120} color={C.cyan} />
-        <WireOrbit style={{ bottom: 40, right: -30 }} size={160} color={C.magenta} />
-        <WireCircuit style={{ bottom: -10, left: -20 }} w={220} h={110} color={C.violet} />
+        <ParallaxLayer style={{ top: -40, right: -50 }} scrollFactor={.08} mouseFactor={10}><WireGlobe size={260} /></ParallaxLayer>
+        <ParallaxLayer style={{ top: 260, left: -40 }} scrollFactor={-.06} mouseFactor={14}><WireHex size={120} color={C.cyan} /></ParallaxLayer>
+        <ParallaxLayer style={{ bottom: 40, right: -30 }} scrollFactor={.13} mouseFactor={-12}><WireOrbit size={170} color={C.magenta} /></ParallaxLayer>
+        <ParallaxLayer style={{ bottom: -10, left: -20 }} scrollFactor={-.1} mouseFactor={8}><WireCircuit w={220} h={110} color={C.violet} /></ParallaxLayer>
       </>
     );
   }
   if (variant === "study") {
     return (
       <>
-        <WireHex style={{ top: 40, right: -40 }} size={110} color={C.violet} />
-        <WireOrbit style={{ bottom: 100, left: -50 }} size={140} color={C.cyan} />
+        <ParallaxLayer style={{ top: 40, right: -40 }} scrollFactor={.06} mouseFactor={10}><WireHex size={110} color={C.violet} /></ParallaxLayer>
+        <ParallaxLayer style={{ bottom: 100, left: -50 }} scrollFactor={-.08} mouseFactor={-10}><WireOrbit size={140} color={C.cyan} /></ParallaxLayer>
       </>
     );
   }
   return (
     <>
-      <WireGlobe style={{ bottom: -60, right: -60 }} size={200} dur={80} color={C.cyan} />
-      <WireHex style={{ top: 100, left: -40 }} size={100} color={C.magenta} />
+      <ParallaxLayer style={{ bottom: -60, right: -60 }} scrollFactor={.07} mouseFactor={10}><WireGlobe size={200} dur={80} color={C.cyan} /></ParallaxLayer>
+      <ParallaxLayer style={{ top: 100, left: -40 }} scrollFactor={-.05} mouseFactor={-8}><WireHex size={100} color={C.magenta} /></ParallaxLayer>
     </>
+  );
+}
+
+function Reveal({ children, delay = 0 }) {
+  const ref = useRef(null);
+  const [shown, setShown] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const io = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting) { setShown(true); io.disconnect(); }
+    }, { threshold: .12 });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+  return (
+    <div ref={ref} style={{
+      transition: `opacity .5s ease ${delay}ms, transform .5s cubic-bezier(.2,.8,.2,1) ${delay}ms`,
+      opacity: shown ? 1 : 0, transform: shown ? "translateY(0)" : "translateY(22px)",
+    }}>{children}</div>
+  );
+}
+
+function FixedBackdrop({ variant }) {
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 0, overflow: "hidden", pointerEvents: "none" }}>
+      <div style={{
+        position: "absolute", inset: 0,
+        background: "radial-gradient(circle at 12% 15%, rgba(139,92,246,.14), transparent 42%), radial-gradient(circle at 88% 12%, rgba(6,182,212,.14), transparent 40%), radial-gradient(circle at 50% 95%, rgba(236,72,153,.12), transparent 45%)",
+      }} />
+      <div style={{
+        position: "absolute", inset: -50,
+        backgroundImage: "linear-gradient(rgba(124,58,237,.05) 1px, transparent 1px), linear-gradient(90deg, rgba(124,58,237,.05) 1px, transparent 1px)",
+        backgroundSize: "46px 46px", animation: "grid-drift 22s linear infinite",
+      }} />
+      <Particles count={variant === "home" ? 22 : 10} />
+      <BackgroundArt variant={variant} />
+    </div>
   );
 }
 
@@ -522,6 +608,23 @@ function CmdRow({ cmd }) {
 }
 
 // ══════════════════════════════════════════════════════════
+//  PROGRESS PERSISTENCE — saved to this browser's localStorage so
+//  mastery survives a reload (mirrors the source app's FSRS storage).
+// ══════════════════════════════════════════════════════════
+const PROGRESS_KEY = "ccna3-ensa-progress-v1";
+function loadProgress() {
+  try {
+    const raw = localStorage.getItem(PROGRESS_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === "object" ? parsed : null;
+  } catch (e) { return null; }
+}
+function saveProgress(state) {
+  try { localStorage.setItem(PROGRESS_KEY, JSON.stringify(state)); } catch (e) { /* storage unavailable — progress just won't persist */ }
+}
+
+// ══════════════════════════════════════════════════════════
 //  ENGINE + APP
 // ══════════════════════════════════════════════════════════
 export default function ENSATrainer() {
@@ -530,10 +633,10 @@ export default function ENSATrainer() {
   const [view, setView] = useState("home");
   const [scope, setScope] = useState("all");
   const [studyMi, setStudyMi] = useState(0);
-  const [prog, setProg] = useState({});
+  const [prog, setProg] = useState(() => loadProgress()?.prog || {});
   const [inject, setInject] = useState([]);
-  const [answered, setAnswered] = useState(0);
-  const [correct, setCorrect] = useState(0);
+  const [answered, setAnswered] = useState(() => loadProgress()?.answered || 0);
+  const [correct, setCorrect] = useState(() => loadProgress()?.correct || 0);
   const [cur, setCur] = useState(null);
   const [picked, setPicked] = useState([]); // array of chosen option indices
   const [mcLocked, setMcLocked] = useState(false);
@@ -543,6 +646,8 @@ export default function ENSATrainer() {
   const [deepErr, setDeepErr] = useState(false);
   const [ask, setAsk] = useState("");
   const [convo, setConvo] = useState([]);
+
+  useEffect(() => { saveProgress({ prog, answered, correct }); }, [prog, answered, correct]);
 
   const getP = (k) => prog[k] || { box: 0, wrong: 0, seen: 0 };
   const poolFor = (sc) => sc === "all" ? ALL : sc === "weak" ? ALL.filter(q => { const p = getP(q.key); return p.wrong > 0 && p.box < 3; }) : ALL.filter(q => q.mi === sc);
@@ -651,9 +756,8 @@ export default function ENSATrainer() {
   const weakCount = ALL.filter(q => { const p = getP(q.key); return p.wrong > 0 && p.box < 3; }).length;
 
   const page = {
-    minHeight: "100vh", position: "relative", overflow: "hidden",
-    background: "radial-gradient(circle at 12% 15%, rgba(139,92,246,.12), transparent 42%), radial-gradient(circle at 88% 12%, rgba(6,182,212,.12), transparent 40%), radial-gradient(circle at 50% 95%, rgba(236,72,153,.10), transparent 45%), " + C.bg,
-    color: C.ink, fontFamily: BODY, padding: "24px 16px 64px",
+    minHeight: "100vh", position: "relative",
+    background: C.bg, color: C.ink, fontFamily: BODY, padding: "24px 16px 64px",
   };
   const wrap = { maxWidth: 900, margin: "0 auto", position: "relative", zIndex: 1 };
   const panel = {
@@ -666,20 +770,27 @@ export default function ENSATrainer() {
   if (view === "home") {
     return (
       <div style={page}>
-        <BackgroundArt variant="home" />
+        <FixedBackdrop variant="home" />
         <div style={wrap}>
         <div style={{ fontFamily: MONO, fontSize: 12, color: C.dim }}>CCNA 3 · ENSA v7.0 · all 14 modules · {ALL.length} drill items</div>
-        <h1 style={{ fontSize: 40, margin: "8px 0 4px", lineHeight: 1.05, ...gradText }}>ENSA<br />ADAPTIVE TRAINER</h1>
+        <div style={{ position: "relative", overflow: "hidden", display: "inline-block" }}>
+          <h1 style={{ fontSize: 40, margin: "8px 0 4px", lineHeight: 1.05, ...gradText }}>ENSA<br />ADAPTIVE TRAINER</h1>
+          <div style={{ position: "absolute", top: 0, left: "-35%", width: "35%", height: "100%", background: "linear-gradient(100deg, transparent, rgba(255,255,255,.65), transparent)", animation: "sweep 5s ease-in-out infinite", pointerEvents: "none" }} />
+        </div>
         <p style={{ color: C.dim, fontSize: 14.5, marginTop: 4, lineHeight: 1.6, maxWidth: 620 }}>Real exam-bank questions with real Cisco IOS commands and exhibits, organized into the 14 official ENSA modules. Some questions are drag-to-match. Ask the tutor anything after you answer.</p>
-        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", margin: "16px 0 22px" }}>
-          <GButton variant="primary" onClick={() => startDrill("all")}>⚡ Drill everything</GButton>
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", margin: "16px 0 22px", alignItems: "center" }}>
+          <div style={{ position: "relative", display: "inline-block" }}>
+            <div style={{ position: "absolute", inset: -6, borderRadius: 999, background: "linear-gradient(135deg,#7c3aed,#ec4899)", filter: "blur(16px)", opacity: .55, animation: "pulse-op 2.2s ease-in-out infinite", zIndex: 0 }} />
+            <div style={{ position: "relative", zIndex: 1 }}><GButton variant="primary" onClick={() => startDrill("all")}>⚡ Drill everything</GButton></div>
+          </div>
           <GButton variant={weakCount ? "dangerGhost" : "ghost"} onClick={() => { if (weakCount) startDrill("weak"); }} disabled={!weakCount}>Weak spots ({weakCount})</GButton>
           <div style={{ marginLeft: "auto", fontFamily: MONO, fontSize: 12, color: C.dim, alignSelf: "center" }}>answered {answered} · {answered ? Math.round((correct / answered) * 100) : 0}% · mastered {masteredCount}/{ALL.length}</div>
         </div>
         {DATA.map((m, mi) => {
           const pct = mastery(mi);
           return (
-            <div key={mi} style={{ background: C.panel, backdropFilter: "blur(10px)", border: "1px solid " + C.line, borderRadius: 14, padding: 14, marginBottom: 10, display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", boxShadow: "0 6px 20px -14px rgba(76,29,149,.25)" }}>
+            <Reveal key={mi} delay={Math.min(mi, 9) * 45}>
+            <div style={{ background: C.panel, backdropFilter: "blur(10px)", border: "1px solid " + C.line, borderRadius: 14, padding: 14, marginBottom: 10, display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", boxShadow: "0 6px 20px -14px rgba(76,29,149,.25)" }}>
               <div style={{ fontFamily: DISPLAY, fontWeight: 900, fontSize: 12, color: C.violet, minWidth: 74 }}>MOD {String(m.num).padStart(2, "0")}</div>
               <div style={{ fontWeight: 700, fontFamily: HEAD, fontSize: 16, flex: 1, minWidth: 200 }}>{m.title} <span style={{ color: C.dim, fontWeight: 500, fontSize: 12.5, fontFamily: BODY }}>· {m.questions.length} q</span></div>
               <div style={{ width: 110, height: 8, background: C.well, borderRadius: 999, overflow: "hidden" }}>
@@ -689,9 +800,10 @@ export default function ENSATrainer() {
               <GButton variant="cyan" onClick={() => { setStudyMi(mi); resetTutor(); setView("study"); }}>Study</GButton>
               <GButton variant="primary" onClick={() => startDrill(mi)}>Drill</GButton>
             </div>
+            </Reveal>
           );
         })}
-        <p style={{ color: C.dim, fontSize: 12, marginTop: 14 }}>Progress is session-only (resets on reload).</p>
+        <p style={{ color: C.dim, fontSize: 12, marginTop: 14 }}>Progress is saved on this device.</p>
         </div>
       </div>
     );
@@ -702,7 +814,7 @@ export default function ENSATrainer() {
     return (
       <TooltipCtx.Provider value={tt}>
       <div style={page}>
-        <BackgroundArt variant="study" />
+        <FixedBackdrop variant="study" />
         <div style={wrap}>
         <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14, flexWrap: "wrap" }}>
           <GButton variant="ghost" onClick={() => setView("home")}>← Modules</GButton>
@@ -767,7 +879,7 @@ export default function ENSATrainer() {
 
   return (
     <div style={page}>
-      <BackgroundArt variant="drill" />
+      <FixedBackdrop variant="drill" />
       <div style={wrap}>
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14, flexWrap: "wrap" }}>
         <GButton variant="ghost" onClick={() => setView("home")}>← Modules</GButton>
