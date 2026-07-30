@@ -64,6 +64,7 @@ function useGlobalStyle() {
       .qhtml code { font-family: ${MONO}; background: ${C.dark}; padding: 2px 7px; border-radius: 5px; font-size: 0.9em; color: #5ef2c0; }
       .qhtml strong { color: ${C.magenta}; }
       .qhtml ul, .qhtml ol { margin: 6px 0 10px; padding-left: 20px; }
+      .qhtml .term-hit { border-bottom: 1.5px dotted ${C.violet}; cursor: help; font-weight: 700; border-radius: 3px; }
     `;
     document.head.appendChild(style);
   }, []);
@@ -531,7 +532,6 @@ function MatchQuestion({ choices, rows, locked, onCheck }) {
 // ══════════════════════════════════════════════════════════
 const ALL = [];
 DATA.forEach((m, mi) => m.questions.forEach((q) => ALL.push(Object.assign({ mi }, q))));
-const BOX_W = [8, 4, 2, 1];
 const BOX_NAME = ["new", "learning", "review", "mastered"];
 const BOX_COLOR = [C.dim, C.amber, C.cyan, C.ok];
 
@@ -589,23 +589,23 @@ function useTooltip() {
     return () => { document.removeEventListener("click", onDocClick, true); document.removeEventListener("keydown", onKey); };
   }, [pinnedKey]);
 
-  const show = (e, content) => { if (pinnedKey) return; anchorRect.current = e.currentTarget.getBoundingClientRect(); setTip(content); };
+  const showAt = (el, content) => { if (pinnedKey) return; anchorRect.current = el.getBoundingClientRect(); setTip(content); };
   const hide = () => { if (pinnedKey) return; setTip(null); };
+  const togglePin = (key, el, content) => {
+    if (pinnedKey === key) { setPinnedKey(null); setTip(null); return; }
+    anchorRect.current = el.getBoundingClientRect();
+    setPinnedKey(key); setTip(content);
+  };
   const triggerProps = (key, content) => ({
     tabIndex: 0,
-    onMouseEnter: (e) => show(e, content),
+    onMouseEnter: (e) => showAt(e.currentTarget, content),
     onMouseLeave: hide,
-    onFocus: (e) => show(e, content),
+    onFocus: (e) => showAt(e.currentTarget, content),
     onBlur: hide,
-    onClick: (e) => {
-      e.stopPropagation();
-      if (pinnedKey === key) { setPinnedKey(null); setTip(null); return; }
-      anchorRect.current = e.currentTarget.getBoundingClientRect();
-      setPinnedKey(key); setTip(content);
-    },
+    onClick: (e) => { e.stopPropagation(); togglePin(key, e.currentTarget, content); },
   });
 
-  return { tip, pos, pinnedKey, tipRef, triggerProps };
+  return { tip, pos, pinnedKey, tipRef, triggerProps, showAt, hide, togglePin };
 }
 
 function linkTermsNodes(text, skipAcr) {
@@ -634,6 +634,61 @@ function TermLink({ acr }) {
   const pinned = tt.pinnedKey === key;
   return (
     <span style={{ ...termLinkStyle, background: pinned ? "rgba(37,99,235,.16)" : "transparent", borderRadius: 3 }} {...tt.triggerProps(key, content)}>{acr}</span>
+  );
+}
+
+// Renders raw question HTML with every glossary term wrapped in a hoverable
+// span wired to the same tooltip engine as the study/teach views. Terms are
+// wrapped by walking the rendered DOM's text nodes (the source is an HTML
+// string, so the React-node approach in linkTermsNodes can't be used).
+function HtmlWithTerms({ html, style }) {
+  const ref = useRef(null);
+  const tt = useContext(TooltipCtx);
+  useEffect(() => {
+    if (!ref.current || !TERM_REGEX) return;
+    const walker = document.createTreeWalker(ref.current, NodeFilter.SHOW_TEXT);
+    const nodes = [];
+    while (walker.nextNode()) nodes.push(walker.currentNode);
+    nodes.forEach((node) => {
+      if (node.parentNode.classList && node.parentNode.classList.contains("term-hit")) return;
+      const text = node.nodeValue;
+      TERM_REGEX.lastIndex = 0;
+      if (!TERM_REGEX.test(text)) return;
+      const frag = document.createDocumentFragment();
+      let last = 0, m;
+      TERM_REGEX.lastIndex = 0;
+      while ((m = TERM_REGEX.exec(text))) {
+        if (m.index > last) frag.appendChild(document.createTextNode(text.slice(last, m.index)));
+        const span = document.createElement("span");
+        span.textContent = m[0];
+        span.dataset.acr = m[0];
+        span.className = "term-hit";
+        span.tabIndex = 0;
+        frag.appendChild(span);
+        last = m.index + m[0].length;
+      }
+      if (last < text.length) frag.appendChild(document.createTextNode(text.slice(last)));
+      node.parentNode.replaceChild(frag, node);
+    });
+  }, [html]);
+  if (!html) return null;
+  const contentFor = (acr) => {
+    const t = GLOSSARY.get(acr);
+    return t ? { key: "term:" + acr + ":" + t.module, content: { head: t.acronym + " — " + t.full, body: t.description, mod: "M" + t.module } } : null;
+  };
+  const acrOf = (e) => (tt && e.target.dataset ? e.target.dataset.acr : null);
+  return (
+    <div
+      ref={ref}
+      className="qhtml"
+      style={style}
+      dangerouslySetInnerHTML={{ __html: html }}
+      onMouseOver={(e) => { const a = acrOf(e); if (!a) return; const c = contentFor(a); if (c) tt.showAt(e.target, c.content); }}
+      onMouseOut={(e) => { if (acrOf(e)) tt.hide(); }}
+      onFocus={(e) => { const a = acrOf(e); if (!a) return; const c = contentFor(a); if (c) tt.showAt(e.target, c.content); }}
+      onBlur={(e) => { if (acrOf(e)) tt.hide(); }}
+      onClick={(e) => { const a = acrOf(e); if (!a) return; const c = contentFor(a); if (c) { e.stopPropagation(); tt.togglePin(c.key, e.target, c.content); } }}
+    />
   );
 }
 
@@ -1087,16 +1142,20 @@ export default function ENSATrainer() {
   const getP = (k) => prog[k] || { box: 0, wrong: 0, seen: 0 };
   const poolFor = (sc) => sc === "all" ? ALL : sc === "weak" ? ALL.filter(q => { const p = getP(q.key); return p.wrong > 0 && p.box < 3; }) : ALL.filter(q => q.mi === sc);
 
+  // Drill order: new -> learning -> review -> mastered, random within each
+  // category. A missed question jumps this queue via inject and reappears
+  // within the next 8 cards no matter which category is being worked.
+  const category = (q) => { const p = getP(q.key); return p.seen === 0 ? 0 : p.box <= 1 ? 1 : p.box === 2 ? 2 : 3; };
   const pickNext = (sc, injList, last, ansCount) => {
     const pool = poolFor(sc);
     if (!pool.length) return null;
     for (let i = 0; i < injList.length; i++) {
       if (injList[i].due <= ansCount) { const q = pool.find(p => p.key === injList[i].key); if (q && q.key !== last) return { q, injIdx: i }; }
     }
-    let total = 0;
-    const w = pool.map(q => { if (q.key === last && pool.length > 1) return 0; const wt = BOX_W[getP(q.key).box]; total += wt; return wt; });
-    let r = Math.random() * total;
-    for (let i = 0; i < pool.length; i++) { r -= w[i]; if (r <= 0) return { q: pool[i], injIdx: -1 }; }
+    for (let c = 0; c <= 3; c++) {
+      const cand = pool.filter(q => category(q) === c && (q.key !== last || pool.length === 1));
+      if (cand.length) return { q: cand[Math.floor(Math.random() * cand.length)], injIdx: -1 };
+    }
     return { q: pool[0], injIdx: -1 };
   };
 
@@ -1107,7 +1166,7 @@ export default function ENSATrainer() {
   const recordResult = (key, isRight) => {
     const p = getP(key), np = Object.assign({}, prog);
     if (isRight) { np[key] = { box: Math.min(3, p.box + 1), wrong: p.wrong, seen: p.seen + 1 }; setCorrect(c => c + 1); setInject(inj => inj.filter(j => j.key !== key)); }
-    else { np[key] = { box: 0, wrong: p.wrong + 1, seen: p.seen + 1 }; setInject(inj => inj.filter(j => j.key !== key).concat([{ key, due: answered + 4 }])); }
+    else { np[key] = { box: 0, wrong: p.wrong + 1, seen: p.seen + 1 }; setInject(inj => inj.filter(j => j.key !== key).concat([{ key, due: answered + 2 + Math.floor(Math.random() * 7) }])); }
     setProg(np); setAnswered(a => a + 1);
   };
 
@@ -1430,6 +1489,7 @@ export default function ENSATrainer() {
 
   // ── DRILL ──
   const p = getP(cur.key);
+  const curCat = category(cur);
   const scopeName = scope === "all" ? "Full course" : scope === "weak" ? "Weak spots" : DATA[scope].title;
   const isMatching = cur.kind === "matching";
   const isMulti = !isMatching && cur.type === "multiple";
@@ -1437,6 +1497,7 @@ export default function ENSATrainer() {
   const wasRight = isMatching ? !!matchDone : isMulti ? sameSet(picked, correctIndices(cur.options)) : picked.length === 1 && !!cur.options[picked[0]].correct;
 
   return (
+    <TooltipCtx.Provider value={tt}>
     <div style={page}>
       <FixedBackdrop variant="drill" />
       <ModeToggle />
@@ -1448,10 +1509,10 @@ export default function ENSATrainer() {
         <div style={{ marginLeft: "auto", fontFamily: MONO, fontSize: 12, color: C.dim }}>answered {answered} · {answered ? Math.round((correct / answered) * 100) : 0}% · mastered {masteredCount}/{ALL.length}</div>
       </div>
 
-      <div style={panel} key={cur.key}>
+      <div style={panel} key={cur.key} data-qkey={cur.key}>
         <div style={{ display: "flex", gap: 8, marginBottom: 10, alignItems: "center", flexWrap: "wrap" }}>
           <span style={{ fontFamily: MONO, fontSize: 11, color: C.violet }}>MOD {DATA[cur.mi].num} · {DATA[cur.mi].title}</span>
-          <span style={chip(BOX_COLOR[p.box])}>{BOX_NAME[p.box]}</span>
+          <span style={chip(BOX_COLOR[curCat])}>{BOX_NAME[curCat]}</span>
           {p.wrong > 0 && <span style={{ fontFamily: MONO, fontSize: 11, color: C.bad }}>missed {p.wrong}x</span>}
           {isMatching && <span style={chip(C.violet)}>drag to match</span>}
           {isMulti && <span style={chip(C.amber)}>select all correct</span>}
@@ -1494,9 +1555,9 @@ export default function ENSATrainer() {
 
         {isDone && (
           <div style={{ marginTop: 16 }}>
-            {!wasRight && <div style={{ fontFamily: HEAD, fontWeight: 700, fontSize: 12.5, color: C.bad, marginBottom: 8, letterSpacing: .3 }}>✗ WRONG — reset to "new". This one comes back within the next few cards.</div>}
+            {!wasRight && <div style={{ fontFamily: HEAD, fontWeight: 700, fontSize: 12.5, color: C.bad, marginBottom: 8, letterSpacing: .3 }}>✗ WRONG — back to "learning". This one comes back within the next 8 cards.</div>}
             <div style={{ fontSize: 13.5, color: "#3a3550", lineHeight: 1.6, margin: "0 0 12px", background: wasRight ? "rgba(16,185,129,.06)" : "rgba(239,68,68,.06)", borderLeft: "3px solid " + (wasRight ? C.ok : C.bad), borderRadius: 8, padding: "10px 12px" }}>
-              <Html html={cur.explanationHtml} />
+              <HtmlWithTerms html={cur.explanationHtml} />
             </div>
 
             {renderTutorBox(drillContextDesc(), <GButton data-testid="next" variant="primary" onClick={next}>Next →</GButton>)}
@@ -1505,5 +1566,7 @@ export default function ENSATrainer() {
       </div>
       </div>
     </div>
+    <TooltipHost />
+    </TooltipCtx.Provider>
   );
 }
