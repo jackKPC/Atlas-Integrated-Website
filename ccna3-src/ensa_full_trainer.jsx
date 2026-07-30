@@ -757,6 +757,91 @@ function CmdRow({ cmd }) {
 }
 
 // ══════════════════════════════════════════════════════════
+//  SYNTAX PRACTICE — "Try It Yourself" slides in syntax-heavy modules.
+//  Presents a task, the student types the IOS command, and it's checked
+//  against accepted answers (whitespace/case tolerant). A wrong try gets
+//  a positional hint; a second wrong try reveals the command, which the
+//  student still has to type correctly to move on.
+// ══════════════════════════════════════════════════════════
+const normCmd = (s) => s.trim().toLowerCase().replace(/\s+/g, " ");
+
+function SyntaxPractice({ slide }) {
+  const [stepIdx, setStepIdx] = useState(0);
+  const [val, setVal] = useState("");
+  const [tries, setTries] = useState(0);
+  const [msg, setMsg] = useState(null); // { kind: 'wrong' | 'reveal', text }
+  const [doneAll, setDoneAll] = useState(false);
+  const [log, setLog] = useState([]);
+  const steps = slide.steps || [];
+  const step = steps[stepIdx];
+
+  const check = () => {
+    if (!step || doneAll || !val.trim()) return;
+    const v = normCmd(val);
+    if (step.answers.some((a) => normCmd(a) === v)) {
+      setLog((l) => l.concat([{ cli: step.cli, cmd: step.answers[0], explain: step.explain }]));
+      setVal(""); setTries(0); setMsg(null);
+      if (stepIdx + 1 >= steps.length) setDoneAll(true);
+      else setStepIdx(stepIdx + 1);
+      return;
+    }
+    const t = tries + 1;
+    setTries(t);
+    if (t >= 2) { setMsg({ kind: "reveal", text: step.answers[0] }); return; }
+    const a = normCmd(step.answers[0]).split(" "), u = v.split(" ");
+    let i = 0;
+    while (i < a.length && i < u.length && a[i] === u[i]) i++;
+    setMsg({
+      kind: "wrong",
+      text: i === 0 ? "Not quite — think about which keyword this command starts with."
+        : i === u.length && u.length < a.length ? "Good start — the command isn't finished yet."
+        : "Check word " + (i + 1) + " — everything before it is right.",
+    });
+  };
+
+  const term = { background: "#0d0b1a", border: "1px solid rgba(37,99,235,.4)", borderRadius: 12, padding: "14px 16px", fontFamily: MONO, fontSize: 13 };
+  return (
+    <div style={{ marginTop: 14 }}>
+      <div style={term}>
+        {log.map((l, i) => (
+          <div key={i} style={{ marginBottom: 10 }}>
+            <div style={{ color: "#f0eaff" }}><span style={{ color: C.cyan }}>{l.cli}</span> {l.cmd} <span style={{ color: C.ok }}>✓</span></div>
+            <div style={{ color: "#8b86a8", fontSize: 11.5, fontFamily: BODY, marginTop: 2 }}>{l.explain}</div>
+          </div>
+        ))}
+        {!doneAll && step && (
+          <div>
+            <div style={{ color: C.amber, fontFamily: BODY, fontSize: 13, marginBottom: 8 }}>▸ Task {steps.length > 1 ? (stepIdx + 1) + " of " + steps.length + ": " : ""}{step.task}</div>
+            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              <span style={{ color: C.cyan, whiteSpace: "nowrap" }}>{step.cli}</span>
+              <input
+                data-testid="syntax-input"
+                value={val}
+                onChange={(e) => { setVal(e.target.value); }}
+                onKeyDown={(e) => { if (e.key === "Enter") check(); }}
+                placeholder="type the command…"
+                autoComplete="off" autoCapitalize="off" autoCorrect="off" spellCheck={false}
+                style={{ flex: 1, background: "transparent", border: "none", borderBottom: "1.5px dotted rgba(240,234,255,.35)", outline: "none", color: "#f0eaff", fontFamily: MONO, fontSize: 13, padding: "4px 2px" }}
+              />
+              <GButton data-testid="syntax-check" variant="cyan" onClick={check} disabled={!val.trim()}>Check</GButton>
+            </div>
+            {msg && msg.kind === "wrong" && <div data-testid="syntax-wrong" style={{ color: C.bad, fontFamily: BODY, fontSize: 12.5, marginTop: 8 }}>✗ {msg.text}</div>}
+            {msg && msg.kind === "reveal" && (
+              <div data-testid="syntax-reveal" style={{ marginTop: 8, fontFamily: BODY, fontSize: 12.5, color: "#f0eaff" }}>
+                <span style={{ color: C.bad }}>✗ Here's the command: </span>
+                <code style={{ fontFamily: MONO, color: "#5ef2c0" }}>{msg.text}</code>
+                <span style={{ color: "#8b86a8" }}> — now type it yourself to lock it in.</span>
+              </div>
+            )}
+          </div>
+        )}
+        {doneAll && <div data-testid="syntax-done" style={{ color: C.ok, fontFamily: BODY, fontSize: 13.5, fontWeight: 700 }}>✓ All commands correct — this syntax is yours now.</div>}
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════
 //  PROGRESS PERSISTENCE — saved to this browser's localStorage so
 //  mastery survives a reload (mirrors the source app's FSRS storage).
 // ══════════════════════════════════════════════════════════
@@ -1224,6 +1309,7 @@ export default function ENSATrainer() {
     const m = DATA[mi];
     let d = "The student is viewing a teaching slide titled \"" + slide.title + "\" in Module " + m.num + " (\"" + m.title + "\"). Slide content: " + slide.body;
     if (slide.keyPoints && slide.keyPoints.length) d += " Key points: " + slide.keyPoints.join(" | ");
+    if (slide.kind === "practice" && slide.steps) d += " This is a hands-on exercise where the student types IOS commands. The tasks and correct commands are: " + slide.steps.map(s => "\"" + s.task + "\" -> " + s.cli + " " + s.answers[0]).join("; ") + ". Help them understand the syntax — but if they ask for an answer outright, guide them toward it instead of just handing it over.";
     return { text: d + " Help them understand this concept more deeply.", images: [] };
   };
 
@@ -1338,11 +1424,12 @@ export default function ENSATrainer() {
 
           <div key={slideIdx} style={{ ...panel, animation: simple ? "none" : `slide-in-${slideDir > 0 ? "r" : "l"} .4s cubic-bezier(.2,.8,.2,1)`, minHeight: 340 }}>
             <div style={{ fontFamily: HEAD, fontWeight: 700, fontSize: 12, letterSpacing: 1.5, textTransform: "uppercase", color: C.amber, marginBottom: 6 }}>
-              {slide.kind === "intro" ? "Welcome" : slide.kind === "recap" ? "Recap" : "Concept " + slideIdx}
+              {slide.kind === "intro" ? "Welcome" : slide.kind === "recap" ? "Recap" : slide.kind === "practice" ? "Try It Yourself" : "Concept " + slideIdx}
             </div>
             <h2 style={{ fontFamily: DISPLAY, fontWeight: 800, fontSize: 25, margin: "0 0 12px", ...(simple ? gradTextFlat : gradText), display: "inline-block" }}>{slide.title}</h2>
             <p style={{ fontSize: 15, lineHeight: 1.7, color: C.ink, marginBottom: (slide.diagram || (slide.keyPoints && slide.keyPoints.length)) ? 16 : 0 }}>{linkTermsNodes(slide.body)}</p>
             {slide.diagram && <TeachDiagram diagram={slide.diagram} />}
+            {slide.kind === "practice" && <SyntaxPractice slide={slide} />}
             {slide.keyPoints && slide.keyPoints.length > 0 && (
               <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 8 }}>
                 {slide.keyPoints.map((k, i) => (
