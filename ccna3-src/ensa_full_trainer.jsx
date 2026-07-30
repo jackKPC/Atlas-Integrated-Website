@@ -22,6 +22,7 @@ const gradText = {
   backgroundSize: "300% 100%", WebkitBackgroundClip: "text", backgroundClip: "text",
   color: "transparent", animation: "gradient-flow 6s ease infinite",
 };
+const gradTextFlat = { fontFamily: DISPLAY, fontWeight: 900, color: "#2563eb" };
 
 // ══════════════════════════════════════════════════════════
 //  GLOBAL STYLE — fonts already linked in ccna3.html; here we inject
@@ -266,6 +267,7 @@ function BackgroundArt({ variant }) {
 }
 
 function Reveal({ children, delay = 0 }) {
+  const mode = useMode();
   const ref = useRef(null);
   const [shown, setShown] = useState(false);
   useEffect(() => {
@@ -277,6 +279,7 @@ function Reveal({ children, delay = 0 }) {
     io.observe(el);
     return () => io.disconnect();
   }, []);
+  if (mode === "simple") return <div>{children}</div>;
   return (
     <div ref={ref} style={{
       transition: `opacity .5s ease ${delay}ms, transform .5s cubic-bezier(.2,.8,.2,1) ${delay}ms`,
@@ -286,6 +289,8 @@ function Reveal({ children, delay = 0 }) {
 }
 
 function FixedBackdrop({ variant }) {
+  const mode = useMode();
+  if (mode === "simple") return null;
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 0, overflow: "hidden", pointerEvents: "none" }}>
       <div style={{
@@ -315,20 +320,31 @@ const VARIANT = {
   dangerGhost: { bg: "#fff", fg: C.bad, glow: "239,68,68", border: "rgba(239,68,68,.4)" },
   teach: { bg: "#fff", fg: C.magenta, glow: "212,160,23", border: "rgba(212,160,23,.4)" },
 };
+// Flat blue/white/yellow set — no gradients, no glow — used in Simple mode.
+const VARIANT_SIMPLE = {
+  primary: { bg: "#2563eb", fg: "#fff", border: "#2563eb" },
+  cyan: { bg: "#ffffff", fg: "#2563eb", border: "#2563eb" },
+  ghost: { bg: "#ffffff", fg: "#1f2937", border: "#cbd5e1" },
+  danger: { bg: "#ef4444", fg: "#fff", border: "#ef4444" },
+  dangerGhost: { bg: "#fff", fg: "#ef4444", border: "#ef4444" },
+  teach: { bg: "#eab308", fg: "#1a1400", border: "#eab308" },
+};
 function GButton({ variant = "ghost", onClick, disabled, children, style, ...rest }) {
+  const mode = useMode();
+  const simple = mode === "simple";
   const [hover, setHover] = useState(false);
-  const v = VARIANT[variant] || VARIANT.ghost;
+  const v = (simple ? VARIANT_SIMPLE[variant] : VARIANT[variant]) || (simple ? VARIANT_SIMPLE.ghost : VARIANT.ghost);
   return (
     <button
       onClick={onClick} disabled={disabled} {...rest}
       onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
       style={{
-        padding: "10px 20px", borderRadius: 999, fontWeight: 700, fontSize: 14.5, fontFamily: HEAD, letterSpacing: .4,
+        padding: "10px 20px", borderRadius: simple ? 8 : 999, fontWeight: 700, fontSize: 14.5, fontFamily: HEAD, letterSpacing: .4,
         background: v.bg, color: v.fg, border: v.border ? "1.5px solid " + v.border : "none",
-        cursor: disabled ? "default" : "pointer", opacity: disabled ? .45 : 1,
-        boxShadow: disabled ? "none" : `0 ${hover ? 10 : 5}px ${hover ? 26 : 14}px -8px rgba(${v.glow},${hover ? .55 : .3})`,
-        transform: hover && !disabled ? "translateY(-2px)" : "translateY(0)",
-        transition: "all .18s cubic-bezier(.2,.8,.2,1)",
+        cursor: disabled ? "default" : "pointer", opacity: disabled ? .45 : (simple && hover ? .85 : 1),
+        boxShadow: simple ? "none" : (disabled ? "none" : `0 ${hover ? 10 : 5}px ${hover ? 26 : 14}px -8px rgba(${v.glow},${hover ? .55 : .3})`),
+        transform: !simple && hover && !disabled ? "translateY(-2px)" : "translateY(0)",
+        transition: simple ? "opacity .1s" : "all .18s cubic-bezier(.2,.8,.2,1)",
         ...style,
       }}
     >{children}</button>
@@ -696,6 +712,52 @@ function saveProgress(state) {
 }
 
 // ══════════════════════════════════════════════════════════
+//  FANCY / SIMPLE MODE — a tiny external store (not React Context)
+//  so any component, anywhere in the tree, can read/react to the
+//  current mode without prop-drilling. Persisted to localStorage.
+// ══════════════════════════════════════════════════════════
+const MODE_KEY = "ccna3-ensa-mode-v1";
+function loadMode() {
+  try { return localStorage.getItem(MODE_KEY) === "simple" ? "simple" : "fancy"; } catch (e) { return "fancy"; }
+}
+let currentMode = loadMode();
+const modeListeners = new Set();
+function setGlobalMode(m) {
+  currentMode = m;
+  try { localStorage.setItem(MODE_KEY, m); } catch (e) { /* storage unavailable */ }
+  modeListeners.forEach((fn) => fn(m));
+}
+function useMode() {
+  const [mode, setLocalMode] = useState(currentMode);
+  useEffect(() => {
+    const fn = (m) => setLocalMode(m);
+    modeListeners.add(fn);
+    return () => modeListeners.delete(fn);
+  }, []);
+  return mode;
+}
+
+function ModeToggle() {
+  const mode = useMode();
+  const simple = mode === "simple";
+  return (
+    <button
+      onClick={() => setGlobalMode(simple ? "fancy" : "simple")}
+      title={simple ? "Switch to Fancy mode" : "Switch to Simple mode"}
+      style={{
+        position: "fixed", bottom: 20, right: 20, zIndex: 500,
+        padding: "8px 16px", borderRadius: 999, cursor: "pointer",
+        fontFamily: HEAD, fontWeight: 700, fontSize: 12.5, letterSpacing: .3,
+        background: simple ? "#ffffff" : "linear-gradient(135deg,#2563eb,#eab308)",
+        color: simple ? "#2563eb" : "#fff",
+        border: simple ? "1.5px solid #2563eb" : "none",
+        boxShadow: simple ? "0 4px 12px -6px rgba(0,0,0,.18)" : "0 6px 20px -8px rgba(37,99,235,.55)",
+      }}
+    >{simple ? "◻ Simple" : "✨ Fancy"}</button>
+  );
+}
+
+// ══════════════════════════════════════════════════════════
 //  TEACHING DIAGRAMS — reusable SVG primitives for the "Teach me"
 //  slideshow. Slide content picks a type + params; these render it
 //  consistently in the site's own palette (no exhibit-image reuse).
@@ -958,7 +1020,9 @@ function BootSequence({ onDone }) {
 // ══════════════════════════════════════════════════════════
 export default function ENSATrainer() {
   useGlobalStyle();
-  const [showBoot, setShowBoot] = useState(true);
+  const mode = useMode();
+  const simple = mode === "simple";
+  const [showBoot, setShowBoot] = useState(() => currentMode !== "simple");
   const tt = useTooltip();
   const [view, setView] = useState("home");
   const [scope, setScope] = useState("all");
@@ -982,7 +1046,7 @@ export default function ENSATrainer() {
 
   useEffect(() => { saveProgress({ prog, answered, correct }); }, [prog, answered, correct]);
 
-  const openTeach = (mi) => { setTeachMi(mi); setSlideIdx(0); setSlideDir(1); };
+  const openTeach = (mi) => { setTeachMi(mi); setSlideIdx(0); setSlideDir(1); resetTutor(); };
 
   useEffect(() => {
     if (teachMi == null) return;
@@ -1053,7 +1117,8 @@ export default function ENSATrainer() {
     setCur(nxt.q); setPicked([]); setMcLocked(false); setMatchDone(null);
   };
 
-  const callLLM = async (userMsg, isFirstBreakdown) => {
+  const drillContextDesc = () => {
+    if (!cur) return "";
     let qDesc;
     if (cur.kind === "matching") {
       qDesc = "a matching exercise: " + stripHtml(cur.questionHtml) + " — " + cur.rows.map(r => r.prompt + " -> " + cur.choices[r.answer]).join("; ");
@@ -1063,11 +1128,25 @@ export default function ENSATrainer() {
       qDesc = "\"" + stripHtml(cur.questionHtml) + "\" Options: " + cur.options.map(o => stripHtml(o.html)).join(" | ") + ". Correct answer: \"" + correctText + "\".";
       if (wrongPicks.length) qDesc += " The student had chosen the wrong option(s): \"" + wrongPicks.join(", ") + "\".";
     }
-    const ctx = "You are a patient CCNA3 ENSA (Enterprise Networking, Security, and Automation) tutor. The student has already mastered CCNA1 and CCNA2 fundamentals. Focus your teaching on the ENSA-level concept this question tests. Current practice item: " + qDesc +
+    return "Focus your teaching on the ENSA-level concept this question tests. Current practice item: " + qDesc;
+  };
+  const studyContextDesc = (mi) => {
+    const m = DATA[mi];
+    return "The student is studying Module " + m.num + " (\"" + m.title + "\"): " + m.summary + " Help them understand this module's concepts, terms, and commands.";
+  };
+  const teachContextDesc = (mi, slide) => {
+    const m = DATA[mi];
+    let d = "The student is viewing a teaching slide titled \"" + slide.title + "\" in Module " + m.num + " (\"" + m.title + "\"). Slide content: " + slide.body;
+    if (slide.keyPoints && slide.keyPoints.length) d += " Key points: " + slide.keyPoints.join(" | ");
+    return d + " Help them understand this concept more deeply.";
+  };
+
+  const callLLM = async (contextDesc, userMsg, isFirstBreakdown) => {
+    const ctx = "You are a patient CCNA3 ENSA (Enterprise Networking, Security, and Automation) tutor. The student has already mastered CCNA1 and CCNA2 fundamentals. " + contextDesc +
       " Answer in plain, easy English, under 180 words, no markdown or bullet symbols. Use short sentences and a tiny concrete example when it helps.";
     const messages = [];
     if (isFirstBreakdown) {
-      messages.push({ role: "user", content: ctx + " Teach the underlying concept from the ground up so the correct answer becomes obvious." });
+      messages.push({ role: "user", content: ctx + " Teach the underlying concept from the ground up so it becomes clear." });
     } else {
       messages.push({ role: "user", content: ctx + " The student is asking a follow-up. Prior exchange: " + convo.map(m => m.role + ": " + m.text).join(" || ") + " || Student now asks: " + userMsg });
     }
@@ -1079,21 +1158,21 @@ export default function ENSATrainer() {
     return txt;
   };
 
-  const breakdown = async () => {
-    if (deepLoading || !cur) return;
+  const breakdown = async (contextDesc) => {
+    if (deepLoading || !contextDesc) return;
     setDeepLoading(true); setDeepErr(false);
-    try { const txt = await callLLM(null, true); setDeep(txt); setConvo([{ role: "tutor", text: txt }]); }
+    try { const txt = await callLLM(contextDesc, null, true); setDeep(txt); setConvo([{ role: "tutor", text: txt }]); }
     catch (e) { setDeepErr(true); }
     setDeepLoading(false);
   };
 
-  const sendAsk = async () => {
+  const sendAsk = async (contextDesc) => {
     const q = ask.trim();
     if (!q || deepLoading) return;
     setDeepLoading(true); setDeepErr(false);
     const newConvo = convo.concat([{ role: "student", text: q }]);
     setConvo(newConvo); setAsk("");
-    try { const txt = await callLLM(q, false); setConvo(newConvo.concat([{ role: "tutor", text: txt }])); if (!deep) setDeep(txt); }
+    try { const txt = await callLLM(contextDesc, q, false); setConvo(newConvo.concat([{ role: "tutor", text: txt }])); if (!deep) setDeep(txt); }
     catch (e) { setDeepErr(true); }
     setDeepLoading(false);
   };
@@ -1104,17 +1183,44 @@ export default function ENSATrainer() {
 
   const page = {
     minHeight: "100vh", position: "relative",
-    background: C.bg, color: C.ink, fontFamily: BODY, padding: "24px 16px 64px",
+    background: simple ? "#ffffff" : C.bg, color: C.ink, fontFamily: BODY, padding: "24px 16px 64px",
   };
   const wrap = { maxWidth: 900, margin: "0 auto", position: "relative", zIndex: 1 };
-  const panel = {
-    background: C.panel, backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)",
-    border: "1px solid " + C.line, borderRadius: 18, padding: 20, marginBottom: 18,
-    boxShadow: "0 10px 34px -16px rgba(76,29,149,.22)", animation: "card-in .45s cubic-bezier(.2,.8,.2,1)",
-  };
+  const panel = simple
+    ? { background: "#ffffff", border: "1px solid #dbe4f0", borderRadius: 10, padding: 20, marginBottom: 18 }
+    : {
+      background: C.panel, backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)",
+      border: "1px solid " + C.line, borderRadius: 18, padding: 20, marginBottom: 18,
+      boxShadow: "0 10px 34px -16px rgba(76,29,149,.22)", animation: "card-in .45s cubic-bezier(.2,.8,.2,1)",
+    };
   const secLabel = (col) => ({ fontFamily: HEAD, fontWeight: 700, fontSize: 13, letterSpacing: 1.8, textTransform: "uppercase", color: col, marginBottom: 10 });
+  const inp = { flex: 1, background: "#fff", border: "1.5px solid " + C.line, borderRadius: 10, padding: "10px 13px", color: C.ink, fontSize: 13, fontFamily: BODY, outline: "none" };
 
-  if (showBoot) {
+  const renderTutorBox = (contextDesc, extraButton, breakdownLabel) => (
+    <div>
+      {convo.length > 0 && (
+        <div style={{ background: "linear-gradient(160deg,#1c1533,#0d0b1a)", border: "1px solid rgba(37,99,235,.4)", borderRadius: 14, padding: 16, marginBottom: 12, boxShadow: "0 14px 34px -18px rgba(76,29,149,.5)" }}>
+          {convo.map((mm, i) => (
+            <div key={i} style={{ marginBottom: i < convo.length - 1 ? 12 : 0 }}>
+              <div style={{ fontFamily: MONO, fontSize: 10.5, color: mm.role === "tutor" ? "#5ef2c0" : C.amber, marginBottom: 4, fontWeight: 700, letterSpacing: .5 }}>{mm.role === "tutor" ? "TUTOR" : "YOU"}</div>
+              <p style={{ fontSize: 13.5, color: "#f0eaff", lineHeight: 1.7, margin: 0, whiteSpace: "pre-wrap", fontFamily: BODY }}>{mm.text}</p>
+            </div>
+          ))}
+        </div>
+      )}
+      {deepErr && <div style={{ fontFamily: MONO, fontSize: 12, color: C.bad, marginBottom: 10 }}>Tutor call failed — try again.</div>}
+      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 10 }}>
+        {extraButton}
+        {convo.length === 0 && <GButton variant="cyan" onClick={() => breakdown(contextDesc)} disabled={deepLoading}>{deepLoading ? "Thinking…" : (breakdownLabel || "✨ Break it down")}</GButton>}
+      </div>
+      <div style={{ display: "flex", gap: 8 }}>
+        <input value={ask} onChange={e => setAsk(e.target.value)} onKeyDown={e => { if (e.key === "Enter") sendAsk(contextDesc); }} placeholder="Ask your own question about this…" style={inp} />
+        <GButton variant={ask.trim() && !deepLoading ? "cyan" : "ghost"} onClick={() => sendAsk(contextDesc)} disabled={deepLoading || !ask.trim()}>{deepLoading ? "…" : "Ask"}</GButton>
+      </div>
+    </div>
+  );
+
+  if (showBoot && !simple) {
     return <BootSequence onDone={() => setShowBoot(false)} />;
   }
 
@@ -1122,10 +1228,12 @@ export default function ENSATrainer() {
     const m = DATA[teachMi];
     const slides = SLIDES[teachMi] || [];
     const slide = slides[slideIdx] || { title: "Coming soon", body: "This module's teaching slides aren't ready yet — check back soon, or jump straight into drilling.", keyPoints: [] };
-    const goSlide = (i) => { setSlideDir(i > slideIdx ? 1 : -1); setSlideIdx(Math.max(0, Math.min(Math.max(slides.length - 1, 0), i))); };
+    const goSlide = (i) => { setSlideDir(i > slideIdx ? 1 : -1); setSlideIdx(Math.max(0, Math.min(Math.max(slides.length - 1, 0), i))); resetTutor(); };
     return (
+      <TooltipCtx.Provider value={tt}>
       <div style={page}>
         <FixedBackdrop variant="study" />
+        <ModeToggle />
         <div style={wrap}>
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14, flexWrap: "wrap" }}>
             <GButton variant="ghost" onClick={() => setTeachMi(null)}>✕ Close</GButton>
@@ -1137,28 +1245,31 @@ export default function ENSATrainer() {
           {slides.length > 0 && (
             <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>
               {slides.map((_, i) => (
-                <button key={i} onClick={() => goSlide(i)} style={{ flex: 1, height: 5, borderRadius: 999, border: "none", cursor: "pointer", padding: 0, background: i <= slideIdx ? "linear-gradient(90deg,#2563eb,#eab308)" : C.well }} />
+                <button key={i} onClick={() => goSlide(i)} style={{ flex: 1, height: 5, borderRadius: 999, border: "none", cursor: "pointer", padding: 0, background: i <= slideIdx ? (simple ? "#2563eb" : "linear-gradient(90deg,#2563eb,#eab308)") : C.well }} />
               ))}
             </div>
           )}
 
-          <div key={slideIdx} style={{ ...panel, animation: `slide-in-${slideDir > 0 ? "r" : "l"} .4s cubic-bezier(.2,.8,.2,1)`, minHeight: 340 }}>
+          <div key={slideIdx} style={{ ...panel, animation: simple ? "none" : `slide-in-${slideDir > 0 ? "r" : "l"} .4s cubic-bezier(.2,.8,.2,1)`, minHeight: 340 }}>
             <div style={{ fontFamily: HEAD, fontWeight: 700, fontSize: 12, letterSpacing: 1.5, textTransform: "uppercase", color: C.amber, marginBottom: 6 }}>
               {slide.kind === "intro" ? "Welcome" : slide.kind === "recap" ? "Recap" : "Concept " + slideIdx}
             </div>
-            <h2 style={{ fontFamily: DISPLAY, fontWeight: 800, fontSize: 25, margin: "0 0 12px", ...gradText, display: "inline-block" }}>{slide.title}</h2>
-            <p style={{ fontSize: 15, lineHeight: 1.7, color: C.ink, marginBottom: (slide.diagram || (slide.keyPoints && slide.keyPoints.length)) ? 16 : 0 }}>{slide.body}</p>
+            <h2 style={{ fontFamily: DISPLAY, fontWeight: 800, fontSize: 25, margin: "0 0 12px", ...(simple ? gradTextFlat : gradText), display: "inline-block" }}>{slide.title}</h2>
+            <p style={{ fontSize: 15, lineHeight: 1.7, color: C.ink, marginBottom: (slide.diagram || (slide.keyPoints && slide.keyPoints.length)) ? 16 : 0 }}>{linkTermsNodes(slide.body)}</p>
             {slide.diagram && <TeachDiagram diagram={slide.diagram} />}
             {slide.keyPoints && slide.keyPoints.length > 0 && (
               <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 8 }}>
                 {slide.keyPoints.map((k, i) => (
                   <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
                     <span style={{ color: C.ok, fontSize: 14, flexShrink: 0 }}>✓</span>
-                    <span style={{ fontSize: 13.5, color: "#3a3550", lineHeight: 1.5 }}>{k}</span>
+                    <span style={{ fontSize: 13.5, color: "#3a3550", lineHeight: 1.5 }}>{linkTermsNodes(k)}</span>
                   </div>
                 ))}
               </div>
             )}
+            <div style={{ borderTop: "1px solid " + C.line, marginTop: 18, paddingTop: 16 }}>
+              {renderTutorBox(teachContextDesc(teachMi, slide))}
+            </div>
           </div>
 
           <div style={{ display: "flex", justifyContent: "space-between", marginTop: 16, gap: 10 }}>
@@ -1171,6 +1282,8 @@ export default function ENSATrainer() {
           </div>
         </div>
       </div>
+      <TooltipHost />
+      </TooltipCtx.Provider>
     );
   }
 
@@ -1178,16 +1291,17 @@ export default function ENSATrainer() {
     return (
       <div style={page}>
         <FixedBackdrop variant="home" />
+        <ModeToggle />
         <div style={wrap}>
         <div style={{ fontFamily: MONO, fontSize: 12, color: C.dim }}>CCNA 3 · ENSA v7.0 · all 14 modules · {ALL.length} drill items</div>
         <div style={{ position: "relative", overflow: "hidden", display: "inline-block" }}>
-          <h1 style={{ fontSize: 40, margin: "8px 0 4px", lineHeight: 1.05, ...gradText }}>ENSA<br />ADAPTIVE TRAINER</h1>
-          <div style={{ position: "absolute", top: 0, left: "-35%", width: "35%", height: "100%", background: "linear-gradient(100deg, transparent, rgba(255,255,255,.65), transparent)", animation: "sweep 5s ease-in-out infinite", pointerEvents: "none" }} />
+          <h1 style={{ fontSize: 40, margin: "8px 0 4px", lineHeight: 1.05, ...(simple ? gradTextFlat : gradText) }}>ENSA<br />ADAPTIVE TRAINER</h1>
+          {!simple && <div style={{ position: "absolute", top: 0, left: "-35%", width: "35%", height: "100%", background: "linear-gradient(100deg, transparent, rgba(255,255,255,.65), transparent)", animation: "sweep 5s ease-in-out infinite", pointerEvents: "none" }} />}
         </div>
         <p style={{ color: C.dim, fontSize: 14.5, marginTop: 4, lineHeight: 1.6, maxWidth: 620 }}>Real exam-bank questions with real Cisco IOS commands and exhibits, organized into the 14 official ENSA modules. Some questions are drag-to-match. Ask the tutor anything after you answer.</p>
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap", margin: "16px 0 22px", alignItems: "center" }}>
           <div style={{ position: "relative", display: "inline-block" }}>
-            <div style={{ position: "absolute", inset: -6, borderRadius: 999, background: "linear-gradient(135deg,#2563eb,#eab308)", filter: "blur(16px)", opacity: .55, animation: "pulse-op 2.2s ease-in-out infinite", zIndex: 0 }} />
+            {!simple && <div style={{ position: "absolute", inset: -6, borderRadius: 999, background: "linear-gradient(135deg,#2563eb,#eab308)", filter: "blur(16px)", opacity: .55, animation: "pulse-op 2.2s ease-in-out infinite", zIndex: 0 }} />}
             <div style={{ position: "relative", zIndex: 1 }}><GButton variant="primary" onClick={() => startDrill("all")}>⚡ Drill everything</GButton></div>
           </div>
           <GButton variant={weakCount ? "dangerGhost" : "ghost"} onClick={() => { if (weakCount) startDrill("weak"); }} disabled={!weakCount}>Weak spots ({weakCount})</GButton>
@@ -1197,11 +1311,13 @@ export default function ENSATrainer() {
           const pct = mastery(mi);
           return (
             <Reveal key={mi} delay={Math.min(mi, 9) * 45}>
-            <div style={{ background: C.panel, backdropFilter: "blur(10px)", border: "1px solid " + C.line, borderRadius: 14, padding: 14, marginBottom: 10, display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", boxShadow: "0 6px 20px -14px rgba(76,29,149,.25)" }}>
+            <div style={simple
+              ? { background: "#fff", border: "1px solid #dbe4f0", borderRadius: 10, padding: 14, marginBottom: 10, display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }
+              : { background: C.panel, backdropFilter: "blur(10px)", border: "1px solid " + C.line, borderRadius: 14, padding: 14, marginBottom: 10, display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", boxShadow: "0 6px 20px -14px rgba(76,29,149,.25)" }}>
               <div style={{ fontFamily: DISPLAY, fontWeight: 900, fontSize: 12, color: C.violet, minWidth: 74 }}>MOD {String(m.num).padStart(2, "0")}</div>
               <div style={{ fontWeight: 700, fontFamily: HEAD, fontSize: 16, flex: 1, minWidth: 200 }}>{m.title} <span style={{ color: C.dim, fontWeight: 500, fontSize: 12.5, fontFamily: BODY }}>· {m.questions.length} q</span></div>
               <div style={{ width: 110, height: 8, background: C.well, borderRadius: 999, overflow: "hidden" }}>
-                <div style={{ width: pct + "%", height: "100%", borderRadius: 999, background: pct === 100 ? "linear-gradient(90deg,#10b981,#06b6d4)" : "linear-gradient(90deg,#2563eb,#eab308,#06b6d4)", backgroundSize: "200% 100%", animation: pct > 0 ? "gradient-flow 3s ease infinite" : "none", transition: "width .4s cubic-bezier(.2,.8,.2,1)" }} />
+                <div style={{ width: pct + "%", height: "100%", borderRadius: 999, background: simple ? "#2563eb" : (pct === 100 ? "linear-gradient(90deg,#10b981,#06b6d4)" : "linear-gradient(90deg,#2563eb,#eab308,#06b6d4)"), backgroundSize: simple ? "auto" : "200% 100%", animation: (!simple && pct > 0) ? "gradient-flow 3s ease infinite" : "none", transition: "width .4s cubic-bezier(.2,.8,.2,1)" }} />
               </div>
               <div style={{ fontFamily: MONO, fontSize: 11, color: pct === 100 ? C.ok : C.dim, width: 36 }}>{pct}%</div>
               <GButton variant="teach" onClick={() => openTeach(mi)}>🎬 Teach me</GButton>
@@ -1223,6 +1339,7 @@ export default function ENSATrainer() {
       <TooltipCtx.Provider value={tt}>
       <div style={page}>
         <FixedBackdrop variant="study" />
+        <ModeToggle />
         <div style={wrap}>
         <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14, flexWrap: "wrap" }}>
           <GButton variant="ghost" onClick={() => setView("home")}>← Modules</GButton>
@@ -1269,6 +1386,11 @@ export default function ENSATrainer() {
           </div>
         </div>
 
+        <div style={panel}>
+          <div style={secLabel(C.violet)}>Ask the Tutor</div>
+          {renderTutorBox(studyContextDesc(studyMi), null, "✨ Explain this module")}
+        </div>
+
         <div style={{ textAlign: "center", marginTop: 8 }}>
           <GButton variant="primary" onClick={() => startDrill(studyMi)}>Drill this module →</GButton>
         </div>
@@ -1282,7 +1404,6 @@ export default function ENSATrainer() {
   // ── DRILL ──
   const p = getP(cur.key);
   const scopeName = scope === "all" ? "Full course" : scope === "weak" ? "Weak spots" : DATA[scope].title;
-  const inp = { flex: 1, background: "#fff", border: "1.5px solid " + C.line, borderRadius: 10, padding: "10px 13px", color: C.ink, fontSize: 13, fontFamily: BODY, outline: "none" };
   const isMatching = cur.kind === "matching";
   const isMulti = !isMatching && cur.type === "multiple";
   const isDone = isMatching ? matchDone !== null : mcLocked;
@@ -1291,6 +1412,7 @@ export default function ENSATrainer() {
   return (
     <div style={page}>
       <FixedBackdrop variant="drill" />
+      <ModeToggle />
       <div style={wrap}>
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14, flexWrap: "wrap" }}>
         <GButton variant="ghost" onClick={() => setView("home")}>← Modules</GButton>
@@ -1350,27 +1472,7 @@ export default function ENSATrainer() {
               <Html html={cur.explanationHtml} />
             </div>
 
-            {convo.length > 0 && (
-              <div style={{ background: "linear-gradient(160deg,#1c1533,#0d0b1a)", border: "1px solid rgba(37,99,235,.4)", borderRadius: 14, padding: 16, marginBottom: 12, boxShadow: "0 14px 34px -18px rgba(76,29,149,.5)" }}>
-                {convo.map((mm, i) => (
-                  <div key={i} style={{ marginBottom: i < convo.length - 1 ? 12 : 0 }}>
-                    <div style={{ fontFamily: MONO, fontSize: 10.5, color: mm.role === "tutor" ? "#5ef2c0" : C.amber, marginBottom: 4, fontWeight: 700, letterSpacing: .5 }}>{mm.role === "tutor" ? "TUTOR" : "YOU"}</div>
-                    <p style={{ fontSize: 13.5, color: "#f0eaff", lineHeight: 1.7, margin: 0, whiteSpace: "pre-wrap", fontFamily: BODY }}>{mm.text}</p>
-                  </div>
-                ))}
-              </div>
-            )}
-            {deepErr && <div style={{ fontFamily: MONO, fontSize: 12, color: C.bad, marginBottom: 10 }}>Tutor call failed — try again.</div>}
-
-            <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 10 }}>
-              <GButton data-testid="next" variant="primary" onClick={next}>Next →</GButton>
-              {convo.length === 0 && <GButton variant="cyan" onClick={breakdown} disabled={deepLoading}>{deepLoading ? "Thinking…" : "✨ Break it down"}</GButton>}
-            </div>
-
-            <div style={{ display: "flex", gap: 8 }}>
-              <input value={ask} onChange={e => setAsk(e.target.value)} onKeyDown={e => { if (e.key === "Enter") sendAsk(); }} placeholder="Ask your own question about this…" style={inp} />
-              <GButton variant={ask.trim() && !deepLoading ? "cyan" : "ghost"} onClick={sendAsk} disabled={deepLoading || !ask.trim()}>{deepLoading ? "…" : "Ask"}</GButton>
-            </div>
+            {renderTutorBox(drillContextDesc(), <GButton data-testid="next" variant="primary" onClick={next}>Next →</GButton>)}
           </div>
         )}
       </div>
