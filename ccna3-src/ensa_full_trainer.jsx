@@ -85,6 +85,13 @@ function stripHtml(html) {
     .replace(/\s+/g, " ")
     .trim();
 }
+function extractImgSrcs(html) {
+  const out = [];
+  const re = /<img[^>]*\ssrc\s*=\s*"([^"]+)"/gi;
+  let m;
+  while ((m = re.exec(html || ""))) out.push(m[1]);
+  return out;
+}
 
 // ══════════════════════════════════════════════════════════
 //  WIREFRAME DECORATIONS — pure ornament, no interaction.
@@ -1135,7 +1142,7 @@ export default function ENSATrainer() {
   };
 
   const drillContextDesc = () => {
-    if (!cur) return "";
+    if (!cur) return null;
     let qDesc;
     if (cur.kind === "matching") {
       qDesc = "a matching exercise: " + stripHtml(cur.questionHtml) + " — " + cur.rows.map(r => r.prompt + " -> " + cur.choices[r.answer]).join("; ");
@@ -1145,21 +1152,24 @@ export default function ENSATrainer() {
       qDesc = "\"" + stripHtml(cur.questionHtml) + "\" Options: " + cur.options.map(o => stripHtml(o.html)).join(" | ") + ". Correct answer: \"" + correctText + "\".";
       if (wrongPicks.length) qDesc += " The student had chosen the wrong option(s): \"" + wrongPicks.join(", ") + "\".";
     }
-    return "Focus your teaching on the ENSA-level concept this question tests. Current practice item: " + qDesc;
+    const images = extractImgSrcs(cur.questionHtml);
+    let text = "Focus your teaching on the ENSA-level concept this question tests. Current practice item: " + qDesc;
+    if (images.length) text += " The question's exhibit image(s) are attached — read them (topology, command output, addresses) and use what they show in your explanation.";
+    return { text, images };
   };
   const studyContextDesc = (mi) => {
     const m = DATA[mi];
-    return "The student is studying Module " + m.num + " (\"" + m.title + "\"): " + m.summary + " Help them understand this module's concepts, terms, and commands.";
+    return { text: "The student is studying Module " + m.num + " (\"" + m.title + "\"): " + m.summary + " Help them understand this module's concepts, terms, and commands.", images: [] };
   };
   const teachContextDesc = (mi, slide) => {
     const m = DATA[mi];
     let d = "The student is viewing a teaching slide titled \"" + slide.title + "\" in Module " + m.num + " (\"" + m.title + "\"). Slide content: " + slide.body;
     if (slide.keyPoints && slide.keyPoints.length) d += " Key points: " + slide.keyPoints.join(" | ");
-    return d + " Help them understand this concept more deeply.";
+    return { text: d + " Help them understand this concept more deeply.", images: [] };
   };
 
   const callLLM = async (contextDesc, userMsg, isFirstBreakdown) => {
-    const ctx = "You are a patient CCNA3 ENSA (Enterprise Networking, Security, and Automation) tutor. The student has already mastered CCNA1 and CCNA2 fundamentals. " + contextDesc +
+    const ctx = "You are a patient CCNA3 ENSA (Enterprise Networking, Security, and Automation) tutor. The student has already mastered CCNA1 and CCNA2 fundamentals. " + contextDesc.text +
       " Answer in plain, easy English, under 180 words, no markdown or bullet symbols. Use short sentences and a tiny concrete example when it helps.";
     const messages = [];
     if (isFirstBreakdown) {
@@ -1167,7 +1177,7 @@ export default function ENSATrainer() {
     } else {
       messages.push({ role: "user", content: ctx + " The student is asking a follow-up. Prior exchange: " + convo.map(m => m.role + ": " + m.text).join(" || ") + " || Student now asks: " + userMsg });
     }
-    const res = await fetch("/api/tutor", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ messages }) });
+    const res = await fetch("/api/tutor", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ messages, images: contextDesc.images || [] }) });
     if (!res.ok) throw new Error("tutor request failed");
     const data = await res.json();
     const txt = (data.text || "").trim();
@@ -1185,7 +1195,7 @@ export default function ENSATrainer() {
 
   const sendAsk = async (contextDesc) => {
     const q = ask.trim();
-    if (!q || deepLoading) return;
+    if (!q || deepLoading || !contextDesc) return;
     setDeepLoading(true); setDeepErr(false);
     const newConvo = convo.concat([{ role: "student", text: q }]);
     setConvo(newConvo); setAsk("");

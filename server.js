@@ -1,8 +1,34 @@
 const http = require("http");
+const path = require("path");
+const { readFile } = require("fs/promises");
 const handler = require("serve-handler");
 
 const OPENROUTER_MODEL = "inclusionai/ling-3.0-flash:free";
+// Exhibit questions need a model that accepts image input; the default text
+// model above does not, so those requests are routed here instead.
+const OPENROUTER_VISION_MODEL = process.env.OPENROUTER_VISION_MODEL || "google/gemini-2.0-flash-exp:free";
 const MAX_BODY_BYTES = 32 * 1024;
+const MAX_IMAGES = 4;
+const ASSETS_DIR = path.join(__dirname, "ccna3-assets");
+const IMAGE_MIME = { ".png": "image/png", ".gif": "image/gif", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp" };
+
+async function loadExhibitImages(srcs) {
+  const parts = [];
+  for (const src of srcs.slice(0, MAX_IMAGES)) {
+    if (typeof src !== "string" || !src.startsWith("/ccna3-assets/")) continue;
+    const filePath = path.join(ASSETS_DIR, src.slice("/ccna3-assets/".length));
+    if (!path.resolve(filePath).startsWith(ASSETS_DIR + path.sep)) continue;
+    const mime = IMAGE_MIME[path.extname(filePath).toLowerCase()];
+    if (!mime) continue;
+    try {
+      const buf = await readFile(filePath);
+      parts.push({ type: "image_url", image_url: { url: `data:${mime};base64,${buf.toString("base64")}` } });
+    } catch (err) {
+      console.error(`[tutor] could not read exhibit ${src}: ${err.message}`);
+    }
+  }
+  return parts;
+}
 
 function readBody(req) {
   return new Promise((resolve, reject) => {
@@ -54,6 +80,19 @@ async function handleTutor(req, res) {
     return;
   }
 
+  let model = OPENROUTER_MODEL;
+  const imageSrcs = Array.isArray(payload.images) ? payload.images : [];
+  if (imageSrcs.length) {
+    const imageParts = await loadExhibitImages(imageSrcs);
+    if (imageParts.length) {
+      model = OPENROUTER_VISION_MODEL;
+      const last = messages[messages.length - 1];
+      if (typeof last.content === "string") {
+        messages[messages.length - 1] = { role: last.role, content: [{ type: "text", text: last.content }, ...imageParts] };
+      }
+    }
+  }
+
   try {
     const upstream = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
@@ -63,7 +102,7 @@ async function handleTutor(req, res) {
         "HTTP-Referer": "https://atlasintegrated.ai/ccna2",
         "X-Title": "SRWE Adaptive Trainer",
       },
-      body: JSON.stringify({ model: OPENROUTER_MODEL, messages, max_tokens: 1000 }),
+      body: JSON.stringify({ model, messages, max_tokens: 1000 }),
     });
 
     let data;
