@@ -1,36 +1,54 @@
 import { useState, useEffect, useRef, useContext, createContext } from "react";
 import DATA from "./data/ccna3-data.json";
 
-// ══ console palette (matches the CCNA2/SRWE trainer) ══
+// ══ HOLO palette — light, futuristic ══
 const C = {
-  bg: "#10151c", panel: "#1a222d", line: "#2b3a4a", ink: "#dce6f0",
-  dim: "#8296ab", amber: "#f5a623", cyan: "#5fd7ff", ok: "#3ddc84", bad: "#ff5c5c",
-  well: "#131a23", dark: "#0b1016", violet: "#b98cff",
+  bg: "#f6f4ff", well: "#f0edff", panel: "rgba(255,255,255,0.74)",
+  line: "rgba(124,58,237,0.18)", ink: "#171029", dim: "#6c6580",
+  amber: "#ff8a3d", cyan: "#06b6d4", ok: "#10b981", bad: "#ef4444", violet: "#7c3aed",
+  magenta: "#ec4899", dark: "#0d0b1a",
 };
+const DISPLAY = "'Orbitron', sans-serif";
+const HEAD = "'Rajdhani', sans-serif";
+const BODY = "'Space Grotesk', 'Segoe UI', system-ui, sans-serif";
 const MONO = "'Cascadia Code','Fira Code',Consolas,monospace";
-const box = (extra) => Object.assign({ background: C.well, border: "1px solid " + C.line, borderRadius: 8, padding: 12 }, extra || {});
-const chip = (col) => ({ fontFamily: MONO, fontSize: 11, padding: "2px 8px", borderRadius: 4, border: "1px solid " + col, color: col, display: "inline-block" });
-const btnS = (bg, fg, bd) => ({ padding: "8px 16px", borderRadius: 8, border: "1px solid " + (bd || bg), background: bg, color: fg, fontWeight: 700, cursor: "pointer", fontSize: 13 });
+
+const box = (extra) => Object.assign({ background: C.well, border: "1px solid " + C.line, borderRadius: 10, padding: 12 }, extra || {});
+const chip = (col) => ({ fontFamily: HEAD, fontWeight: 700, fontSize: 11.5, padding: "3px 9px", borderRadius: 999, border: "1px solid " + col, color: col, display: "inline-block", letterSpacing: .3 });
+const gradText = {
+  fontFamily: DISPLAY, fontWeight: 900,
+  background: "linear-gradient(90deg,#7c3aed,#06b6d4,#ec4899,#7c3aed)",
+  backgroundSize: "300% 100%", WebkitBackgroundClip: "text", backgroundClip: "text",
+  color: "transparent", animation: "gradient-flow 6s ease infinite",
+};
 
 // ══════════════════════════════════════════════════════════
-//  QUESTION HTML — renders the real questionHtml/explanationHtml/
-//  option HTML strings from the source question bank, which contain
-//  <strong>, <code>, <br>, and real exhibit <img> tags.
+//  GLOBAL STYLE — fonts already linked in ccna3.html; here we inject
+//  keyframes, the qhtml content rules, and a couple of resets.
 // ══════════════════════════════════════════════════════════
-let qhtmlStyleInjected = false;
-function useQhtmlStyle() {
+let globalStyleInjected = false;
+function useGlobalStyle() {
   useEffect(() => {
-    if (qhtmlStyleInjected) return;
-    qhtmlStyleInjected = true;
+    if (globalStyleInjected) return;
+    globalStyleInjected = true;
     const style = document.createElement("style");
     style.textContent = `
-      .qhtml img { max-width: 100%; height: auto; display: block; margin: 10px 0; border-radius: 8px; border: 1px solid ${C.line}; }
+      @keyframes gradient-flow { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+      @keyframes spin-slow { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+      @keyframes spin-slow-rev { from{transform:rotate(360deg)} to{transform:rotate(0deg)} }
+      @keyframes float-y { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-16px)} }
+      @keyframes float-y-sm { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+      @keyframes draw-path { to{stroke-dashoffset:0} }
+      @keyframes pulse-op { 0%,100%{opacity:.35} 50%{opacity:.85} }
+      @keyframes card-in { from{opacity:0; transform:translateY(10px)} to{opacity:1; transform:translateY(0)} }
+      @media (max-width: 760px) { .wire-deco { display:none !important; } }
+      ::selection { background: rgba(124,58,237,.25); }
+      .qhtml img { max-width: 100%; height: auto; display: block; margin: 12px 0; border-radius: 12px; border: 1px solid ${C.line}; box-shadow: 0 10px 30px -14px rgba(76,29,149,.35); }
       .qhtml p { margin: 0 0 10px; }
       .qhtml p:last-child { margin-bottom: 0; }
-      .qhtml code { font-family: ${MONO}; background: ${C.dark}; padding: 2px 6px; border-radius: 4px; font-size: 0.92em; color: ${C.cyan}; }
-      .qhtml strong { color: ${C.amber}; }
+      .qhtml code { font-family: ${MONO}; background: ${C.dark}; padding: 2px 7px; border-radius: 5px; font-size: 0.9em; color: #5ef2c0; }
+      .qhtml strong { color: ${C.magenta}; }
       .qhtml ul, .qhtml ol { margin: 6px 0 10px; padding-left: 20px; }
-      .qhtml br { content: ""; display: block; margin: 4px 0; }
     `;
     document.head.appendChild(style);
   }, []);
@@ -54,15 +72,123 @@ function stripHtml(html) {
 }
 
 // ══════════════════════════════════════════════════════════
-//  CODE BLOCK — CLI command / output snippet
+//  WIREFRAME DECORATIONS — pure ornament, no interaction.
+// ══════════════════════════════════════════════════════════
+function WireGlobe({ style, size = 190, color = C.violet, dur = 60 }) {
+  return (
+    <svg className="wire-deco" viewBox="0 0 200 200" width={size} height={size}
+      style={{ position: "absolute", opacity: .16, pointerEvents: "none", animation: `spin-slow ${dur}s linear infinite`, ...style }}>
+      <circle cx="100" cy="100" r="90" fill="none" stroke={color} strokeWidth="1" />
+      <ellipse cx="100" cy="100" rx="90" ry="28" fill="none" stroke={color} strokeWidth="1" />
+      <ellipse cx="100" cy="100" rx="90" ry="58" fill="none" stroke={color} strokeWidth="1" />
+      <ellipse cx="100" cy="100" rx="28" ry="90" fill="none" stroke={color} strokeWidth="1" />
+      <ellipse cx="100" cy="100" rx="58" ry="90" fill="none" stroke={color} strokeWidth="1" />
+      <line x1="10" y1="100" x2="190" y2="100" stroke={color} strokeWidth="1" />
+      <line x1="100" y1="10" x2="100" y2="190" stroke={color} strokeWidth="1" />
+    </svg>
+  );
+}
+function WireHex({ style, size = 140, color = C.cyan }) {
+  return (
+    <svg className="wire-deco" viewBox="0 0 140 140" width={size} height={size}
+      style={{ position: "absolute", opacity: .16, pointerEvents: "none", animation: "float-y 8s ease-in-out infinite", ...style }}>
+      <polygon points="70,4 132,38 132,102 70,136 8,102 8,38" fill="none" stroke={color} strokeWidth="1.4" />
+      <polygon points="70,24 112,48 112,92 70,116 28,92 28,48" fill="none" stroke={color} strokeWidth="1" />
+      <line x1="70" y1="4" x2="70" y2="136" stroke={color} strokeWidth=".7" />
+      <line x1="8" y1="38" x2="132" y2="102" stroke={color} strokeWidth=".7" />
+      <line x1="8" y1="102" x2="132" y2="38" stroke={color} strokeWidth=".7" />
+    </svg>
+  );
+}
+function WireOrbit({ style, size = 170, color = C.magenta }) {
+  return (
+    <svg className="wire-deco" viewBox="0 0 160 160" width={size} height={size}
+      style={{ position: "absolute", opacity: .18, pointerEvents: "none", ...style }}>
+      <circle cx="80" cy="80" r="70" fill="none" stroke={color} strokeWidth="1" strokeDasharray="4 6" />
+      <circle cx="80" cy="80" r="45" fill="none" stroke={color} strokeWidth="1" strokeDasharray="2 5" />
+      <circle cx="80" cy="80" r="3" fill={color} />
+      <g style={{ transformOrigin: "80px 80px", animation: "spin-slow 16s linear infinite" }}><circle cx="150" cy="80" r="4" fill={color} /></g>
+      <g style={{ transformOrigin: "80px 80px", animation: "spin-slow-rev 10s linear infinite" }}><circle cx="80" cy="35" r="3" fill={color} /></g>
+    </svg>
+  );
+}
+function WireCircuit({ style, w = 220, h = 120, color = C.violet }) {
+  return (
+    <svg className="wire-deco" viewBox={`0 0 ${w} ${h}`} width={w} height={h}
+      style={{ position: "absolute", opacity: .16, pointerEvents: "none", ...style }}>
+      <path d="M4 60 H50 V20 H110 V90 H160 V50 H216" fill="none" stroke={color} strokeWidth="1.4" strokeDasharray="6 6" strokeDashoffset="240" style={{ animation: "draw-path 4s linear infinite" }} />
+      {[[50, 60], [110, 20], [110, 90], [160, 50]].map(([x, y], i) => <circle key={i} cx={x} cy={y} r="3.4" fill={color} style={{ animation: "pulse-op 2.4s ease-in-out infinite" }} />)}
+    </svg>
+  );
+}
+function BackgroundArt({ variant }) {
+  if (variant === "home") {
+    return (
+      <>
+        <WireGlobe style={{ top: -40, right: -50 }} size={220} />
+        <WireHex style={{ top: 260, left: -40 }} size={120} color={C.cyan} />
+        <WireOrbit style={{ bottom: 40, right: -30 }} size={160} color={C.magenta} />
+        <WireCircuit style={{ bottom: -10, left: -20 }} w={220} h={110} color={C.violet} />
+      </>
+    );
+  }
+  if (variant === "study") {
+    return (
+      <>
+        <WireHex style={{ top: 40, right: -40 }} size={110} color={C.violet} />
+        <WireOrbit style={{ bottom: 100, left: -50 }} size={140} color={C.cyan} />
+      </>
+    );
+  }
+  return (
+    <>
+      <WireGlobe style={{ bottom: -60, right: -60 }} size={200} dur={80} color={C.cyan} />
+      <WireHex style={{ top: 100, left: -40 }} size={100} color={C.magenta} />
+    </>
+  );
+}
+
+// ══════════════════════════════════════════════════════════
+//  GLOW BUTTON — light-theme gradient/ghost button with hover lift
+// ══════════════════════════════════════════════════════════
+const VARIANT = {
+  primary: { bg: "linear-gradient(135deg,#7c3aed,#ec4899)", fg: "#fff", glow: "124,58,237" },
+  cyan: { bg: "linear-gradient(135deg,#06b6d4,#3b82f6)", fg: "#fff", glow: "6,182,212" },
+  ghost: { bg: "#ffffff", fg: C.ink, glow: "124,58,237", border: C.line },
+  danger: { bg: "linear-gradient(135deg,#ef4444,#f97316)", fg: "#fff", glow: "239,68,68" },
+  dangerGhost: { bg: "#fff", fg: C.bad, glow: "239,68,68", border: "rgba(239,68,68,.4)" },
+};
+function GButton({ variant = "ghost", onClick, disabled, children, style, ...rest }) {
+  const [hover, setHover] = useState(false);
+  const v = VARIANT[variant] || VARIANT.ghost;
+  return (
+    <button
+      onClick={onClick} disabled={disabled} {...rest}
+      onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
+      style={{
+        padding: "10px 20px", borderRadius: 999, fontWeight: 700, fontSize: 14.5, fontFamily: HEAD, letterSpacing: .4,
+        background: v.bg, color: v.fg, border: v.border ? "1.5px solid " + v.border : "none",
+        cursor: disabled ? "default" : "pointer", opacity: disabled ? .45 : 1,
+        boxShadow: disabled ? "none" : `0 ${hover ? 10 : 5}px ${hover ? 26 : 14}px -8px rgba(${v.glow},${hover ? .55 : .3})`,
+        transform: hover && !disabled ? "translateY(-2px)" : "translateY(0)",
+        transition: "all .18s cubic-bezier(.2,.8,.2,1)",
+        ...style,
+      }}
+    >{children}</button>
+  );
+}
+
+// ══════════════════════════════════════════════════════════
+//  CODE BLOCK — dark terminal inset for real CLI commands
 // ══════════════════════════════════════════════════════════
 function CodeBlock({ code }) {
   if (!code) return null;
   return (
     <pre style={{
-      fontFamily: MONO, fontSize: 12.5, color: C.ok, background: C.dark,
-      border: "1px solid " + C.line, borderRadius: 8, padding: "8px 12px",
+      fontFamily: MONO, fontSize: 12.5, color: "#5ef2c0", background: C.dark,
+      border: "1px solid rgba(139,92,246,.35)", borderRadius: 10, padding: "10px 14px",
       overflowX: "auto", whiteSpace: "pre", margin: 0, lineHeight: 1.5,
+      boxShadow: "0 8px 22px -12px rgba(20,10,50,.5)",
     }}>{code}</pre>
   );
 }
@@ -152,19 +278,20 @@ function MatchQuestion({ choices, rows, locked, onCheck }) {
   const allFilled = slots.every((s) => s !== null);
 
   const chipStyle = (idx, placedInSlot) => {
-    let bd = C.cyan, bg = "#122430", fg = C.cyan;
+    let bd = C.violet, bg = "#f5f3ff", fg = C.violet;
     if (checked) {
       const rowIdx = slots.indexOf(idx);
       const ok = rowIdx !== -1 && checked[rowIdx];
       bd = ok ? C.ok : C.bad;
-      bg = ok ? "#12241a" : "#2a1616";
+      bg = ok ? "#ecfdf5" : "#fef2f2";
       fg = ok ? C.ok : C.bad;
     }
     return {
-      fontSize: 12.5, padding: "8px 12px", borderRadius: 6, border: "1px solid " + bd,
+      fontSize: 12.5, fontFamily: BODY, fontWeight: 600, padding: "8px 12px", borderRadius: 8, border: "1.5px solid " + bd,
       background: bg, color: fg, cursor: locked || checked ? "default" : "grab",
       userSelect: "none", touchAction: "none", opacity: dragging && dragging.idx === idx ? 0.3 : 1,
       display: "inline-block", width: placedInSlot ? "100%" : "auto", boxSizing: "border-box",
+      boxShadow: "0 2px 8px -4px rgba(76,29,149,.25)",
     };
   };
 
@@ -173,13 +300,13 @@ function MatchQuestion({ choices, rows, locked, onCheck }) {
       <div style={{ display: "grid", gap: 8, marginBottom: 14 }}>
         {rows.map((row, rowIdx) => (
           <div key={rowIdx} style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr", gap: 10, alignItems: "center" }}>
-            <div style={{ fontSize: 13, color: C.ink, padding: "8px 10px", background: C.well, borderRadius: 6, border: "1px solid " + C.line }}>{row.prompt}</div>
+            <div style={{ fontSize: 13, fontFamily: BODY, color: C.ink, padding: "8px 10px", background: "#fff", borderRadius: 8, border: "1px solid " + C.line }}>{row.prompt}</div>
             <div
               data-dropzone={String(rowIdx)}
-              style={{ minHeight: 38, border: "1.5px dashed " + (slots[rowIdx] === null ? C.line : "transparent"), borderRadius: 6, display: "flex", alignItems: "center", padding: slots[rowIdx] === null ? "0 10px" : 0 }}
+              style={{ minHeight: 38, border: "1.5px dashed " + (slots[rowIdx] === null ? C.line : "transparent"), borderRadius: 8, display: "flex", alignItems: "center", padding: slots[rowIdx] === null ? "0 10px" : 0 }}
             >
               {slots[rowIdx] === null ? (
-                <span style={{ fontSize: 11.5, color: C.dim, fontFamily: MONO }}>drop here</span>
+                <span style={{ fontSize: 11.5, color: C.dim, fontFamily: HEAD, fontWeight: 600 }}>drop here</span>
               ) : (
                 <div
                   onPointerDown={(e) => startDrag(slots[rowIdx], e)}
@@ -192,8 +319,8 @@ function MatchQuestion({ choices, rows, locked, onCheck }) {
         ))}
       </div>
 
-      <div data-dropzone="pool" style={{ display: "flex", flexWrap: "wrap", gap: 8, minHeight: 44, padding: 10, background: C.dark, borderRadius: 8, border: "1px dashed " + C.line, marginBottom: 12 }}>
-        {pool.length === 0 && <span style={{ fontSize: 11.5, color: C.dim, fontFamily: MONO }}>(all placed — drag back here to undo)</span>}
+      <div data-dropzone="pool" style={{ display: "flex", flexWrap: "wrap", gap: 8, minHeight: 44, padding: 10, background: C.well, borderRadius: 10, border: "1px dashed " + C.line, marginBottom: 12 }}>
+        {pool.length === 0 && <span style={{ fontSize: 11.5, color: C.dim, fontFamily: HEAD, fontWeight: 600 }}>(all placed — drag back here to undo)</span>}
         {pool.map((idx) => (
           <div key={idx} onPointerDown={(e) => startDrag(idx, e)} onTouchStart={(e) => startDrag(idx, e)} style={chipStyle(idx, false)}>
             {chipLabel(idx)}
@@ -202,14 +329,14 @@ function MatchQuestion({ choices, rows, locked, onCheck }) {
       </div>
 
       {!checked && (
-        <button data-testid="check-matches" onClick={check} disabled={!allFilled} style={btnS(allFilled ? C.amber : C.panel, allFilled ? C.bg : C.dim, allFilled ? C.amber : C.line)}>
+        <GButton data-testid="check-matches" variant={allFilled ? "primary" : "ghost"} onClick={check} disabled={!allFilled}>
           Check matches
-        </button>
+        </GButton>
       )}
 
       {dragging && (
         <div style={{ position: "fixed", left: dragging.x - 40, top: dragging.y - 18, pointerEvents: "none", zIndex: 999, width: 120 }}>
-          <div style={{ ...chipStyle(dragging.idx, false), textAlign: "center", boxShadow: "0 4px 16px rgba(0,0,0,.5)" }}>{chipLabel(dragging.idx)}</div>
+          <div style={{ ...chipStyle(dragging.idx, false), textAlign: "center", boxShadow: "0 10px 26px -8px rgba(76,29,149,.5)" }}>{chipLabel(dragging.idx)}</div>
         </div>
       )}
     </div>
@@ -316,7 +443,7 @@ function linkTermsNodes(text, skipAcr) {
   return out;
 }
 
-const termLinkStyle = { borderBottom: "1.5px dotted " + C.cyan, cursor: "help", fontWeight: 600 };
+const termLinkStyle = { borderBottom: "1.5px dotted " + C.violet, cursor: "help", fontWeight: 700 };
 
 function TermLink({ acr }) {
   const t = GLOSSARY.get(acr);
@@ -326,7 +453,7 @@ function TermLink({ acr }) {
   const content = { head: t.acronym + " — " + t.full, body: t.description, mod: "M" + t.module };
   const pinned = tt.pinnedKey === key;
   return (
-    <span style={{ ...termLinkStyle, background: pinned ? "rgba(95,215,255,.18)" : "transparent" }} {...tt.triggerProps(key, content)}>{acr}</span>
+    <span style={{ ...termLinkStyle, background: pinned ? "rgba(124,58,237,.16)" : "transparent", borderRadius: 3 }} {...tt.triggerProps(key, content)}>{acr}</span>
   );
 }
 
@@ -339,14 +466,14 @@ function TooltipHost() {
       data-testid="tooltip"
       style={{
         position: "fixed", left: tt.pos.left, top: tt.pos.top, maxWidth: 340,
-        background: C.ink, color: C.bg, padding: "10px 12px", borderRadius: 8,
-        fontSize: 12.5, lineHeight: 1.45, boxShadow: "0 12px 32px -8px rgba(0,0,0,.5)",
+        background: "linear-gradient(160deg,#1c1533,#0d0b1a)", color: "#f0eaff", padding: "12px 14px", borderRadius: 12,
+        fontSize: 12.5, fontFamily: BODY, lineHeight: 1.5, boxShadow: "0 20px 50px -14px rgba(76,29,149,.55), 0 0 0 1px rgba(139,92,246,.4)",
         zIndex: 1000, pointerEvents: tt.pinnedKey ? "auto" : "none",
       }}
     >
-      <div style={{ fontFamily: MONO, fontWeight: 700, marginBottom: 3, fontSize: 12 }}>
+      <div style={{ fontFamily: MONO, fontWeight: 700, marginBottom: 4, fontSize: 12, color: "#5ef2c0" }}>
         {tt.tip.head}
-        {tt.tip.mod && <span style={{ float: "right", opacity: .6, fontWeight: 400 }}>{tt.tip.mod}</span>}
+        {tt.tip.mod && <span style={{ float: "right", opacity: .7, fontWeight: 400, color: C.cyan }}>{tt.tip.mod}</span>}
       </div>
       <div>{linkTermsNodes(tt.tip.body)}</div>
     </div>
@@ -362,12 +489,14 @@ function TermChip({ t }) {
     <div
       {...tt.triggerProps(key, content)}
       style={{
-        display: "flex", flexDirection: "column", gap: 2, padding: "8px 10px", borderRadius: 6, cursor: "help",
-        background: pinned ? "rgba(185,140,255,.14)" : C.well, border: "1px solid " + (pinned ? C.violet : C.line), minWidth: 150,
+        display: "flex", flexDirection: "column", gap: 2, padding: "9px 12px", borderRadius: 10, cursor: "help",
+        background: pinned ? "rgba(124,58,237,.10)" : "#fff", border: "1.5px solid " + (pinned ? C.violet : C.line), minWidth: 150,
+        boxShadow: pinned ? "0 6px 18px -8px rgba(124,58,237,.5)" : "0 2px 8px -5px rgba(76,29,149,.2)",
+        transition: "all .15s",
       }}
     >
       <span style={{ fontFamily: MONO, fontSize: 12, color: C.violet, fontWeight: 700 }}>{t.acronym}</span>
-      <span style={{ fontSize: 12, color: "#c3d0dd" }}>{t.full}</span>
+      <span style={{ fontSize: 12, fontFamily: BODY, color: C.ink }}>{t.full}</span>
     </div>
   );
 }
@@ -382,8 +511,8 @@ function CmdRow({ cmd }) {
       {...tt.triggerProps(key, content)}
       style={{
         display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", cursor: "help",
-        padding: "6px 8px", borderRadius: 6, background: pinned ? "rgba(95,215,255,.10)" : "transparent",
-        border: "1px solid " + (pinned ? C.cyan : "transparent"),
+        padding: "6px 8px", borderRadius: 10, background: pinned ? "rgba(6,182,212,.10)" : "transparent",
+        border: "1.5px solid " + (pinned ? C.cyan : "transparent"), transition: "all .15s",
       }}
     >
       <CodeBlock code={cmd.command} />
@@ -396,7 +525,7 @@ function CmdRow({ cmd }) {
 //  ENGINE + APP
 // ══════════════════════════════════════════════════════════
 export default function ENSATrainer() {
-  useQhtmlStyle();
+  useGlobalStyle();
   const tt = useTooltip();
   const [view, setView] = useState("home");
   const [scope, setScope] = useState("all");
@@ -521,38 +650,50 @@ export default function ENSATrainer() {
   const masteredCount = ALL.filter(q => getP(q.key).box === 3).length;
   const weakCount = ALL.filter(q => { const p = getP(q.key); return p.wrong > 0 && p.box < 3; }).length;
 
-  const page = { minHeight: "100vh", background: C.bg, color: C.ink, fontFamily: "'Segoe UI', system-ui, sans-serif", padding: "24px 16px 64px" };
-  const wrap = { maxWidth: 900, margin: "0 auto" };
-  const panel = { background: C.panel, border: "1px solid " + C.line, borderRadius: 10, padding: 18, marginBottom: 16 };
-  const btn = (bg, fg, bd) => ({ padding: "9px 18px", borderRadius: 8, border: "1px solid " + (bd || bg), background: bg, color: fg, fontWeight: 700, cursor: "pointer", fontSize: 14 });
-  const secLabel = (col) => ({ fontFamily: MONO, fontSize: 11, letterSpacing: 1.5, textTransform: "uppercase", color: col, marginBottom: 8 });
+  const page = {
+    minHeight: "100vh", position: "relative", overflow: "hidden",
+    background: "radial-gradient(circle at 12% 15%, rgba(139,92,246,.12), transparent 42%), radial-gradient(circle at 88% 12%, rgba(6,182,212,.12), transparent 40%), radial-gradient(circle at 50% 95%, rgba(236,72,153,.10), transparent 45%), " + C.bg,
+    color: C.ink, fontFamily: BODY, padding: "24px 16px 64px",
+  };
+  const wrap = { maxWidth: 900, margin: "0 auto", position: "relative", zIndex: 1 };
+  const panel = {
+    background: C.panel, backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)",
+    border: "1px solid " + C.line, borderRadius: 18, padding: 20, marginBottom: 18,
+    boxShadow: "0 10px 34px -16px rgba(76,29,149,.22)", animation: "card-in .45s cubic-bezier(.2,.8,.2,1)",
+  };
+  const secLabel = (col) => ({ fontFamily: HEAD, fontWeight: 700, fontSize: 13, letterSpacing: 1.8, textTransform: "uppercase", color: col, marginBottom: 10 });
 
   if (view === "home") {
     return (
-      <div style={page}><div style={wrap}>
+      <div style={page}>
+        <BackgroundArt variant="home" />
+        <div style={wrap}>
         <div style={{ fontFamily: MONO, fontSize: 12, color: C.dim }}>CCNA 3 · ENSA v7.0 · all 14 modules · {ALL.length} drill items</div>
-        <h1 style={{ fontSize: 30, margin: "6px 0 2px", fontWeight: 800 }}>ENSA <span style={{ color: C.amber }}>Adaptive Trainer</span></h1>
-        <p style={{ color: C.dim, fontSize: 14, marginTop: 4, lineHeight: 1.6 }}>Real exam-bank questions with real Cisco IOS commands and exhibits, organized into the 14 official ENSA modules. Some questions are drag-to-match. Ask the tutor anything after you answer.</p>
-        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", margin: "14px 0 20px" }}>
-          <button onClick={() => startDrill("all")} style={btn(C.amber, C.bg)}>Drill everything</button>
-          <button onClick={() => { if (weakCount) startDrill("weak"); }} style={btn(weakCount ? "#2a1616" : C.panel, weakCount ? C.bad : C.dim, weakCount ? C.bad : C.line)}>Weak spots ({weakCount})</button>
+        <h1 style={{ fontSize: 40, margin: "8px 0 4px", lineHeight: 1.05, ...gradText }}>ENSA<br />ADAPTIVE TRAINER</h1>
+        <p style={{ color: C.dim, fontSize: 14.5, marginTop: 4, lineHeight: 1.6, maxWidth: 620 }}>Real exam-bank questions with real Cisco IOS commands and exhibits, organized into the 14 official ENSA modules. Some questions are drag-to-match. Ask the tutor anything after you answer.</p>
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", margin: "16px 0 22px" }}>
+          <GButton variant="primary" onClick={() => startDrill("all")}>⚡ Drill everything</GButton>
+          <GButton variant={weakCount ? "dangerGhost" : "ghost"} onClick={() => { if (weakCount) startDrill("weak"); }} disabled={!weakCount}>Weak spots ({weakCount})</GButton>
           <div style={{ marginLeft: "auto", fontFamily: MONO, fontSize: 12, color: C.dim, alignSelf: "center" }}>answered {answered} · {answered ? Math.round((correct / answered) * 100) : 0}% · mastered {masteredCount}/{ALL.length}</div>
         </div>
         {DATA.map((m, mi) => {
           const pct = mastery(mi);
           return (
-            <div key={mi} style={{ background: C.panel, border: "1px solid " + C.line, borderRadius: 10, padding: 14, marginBottom: 10, display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-              <div style={{ fontFamily: MONO, fontSize: 11, color: C.cyan, minWidth: 74 }}>Module {m.num}</div>
-              <div style={{ fontWeight: 700, flex: 1, minWidth: 200 }}>{m.title} <span style={{ color: C.dim, fontWeight: 400, fontSize: 12 }}>· {m.questions.length} q</span></div>
-              <div style={{ width: 110, height: 6, background: C.well, borderRadius: 3, overflow: "hidden" }}><div style={{ width: pct + "%", height: "100%", background: pct === 100 ? C.ok : C.amber, transition: "width .3s" }} /></div>
+            <div key={mi} style={{ background: C.panel, backdropFilter: "blur(10px)", border: "1px solid " + C.line, borderRadius: 14, padding: 14, marginBottom: 10, display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", boxShadow: "0 6px 20px -14px rgba(76,29,149,.25)" }}>
+              <div style={{ fontFamily: DISPLAY, fontWeight: 900, fontSize: 12, color: C.violet, minWidth: 74 }}>MOD {String(m.num).padStart(2, "0")}</div>
+              <div style={{ fontWeight: 700, fontFamily: HEAD, fontSize: 16, flex: 1, minWidth: 200 }}>{m.title} <span style={{ color: C.dim, fontWeight: 500, fontSize: 12.5, fontFamily: BODY }}>· {m.questions.length} q</span></div>
+              <div style={{ width: 110, height: 8, background: C.well, borderRadius: 999, overflow: "hidden" }}>
+                <div style={{ width: pct + "%", height: "100%", borderRadius: 999, background: pct === 100 ? "linear-gradient(90deg,#10b981,#06b6d4)" : "linear-gradient(90deg,#7c3aed,#ec4899,#06b6d4)", backgroundSize: "200% 100%", animation: pct > 0 ? "gradient-flow 3s ease infinite" : "none", transition: "width .4s cubic-bezier(.2,.8,.2,1)" }} />
+              </div>
               <div style={{ fontFamily: MONO, fontSize: 11, color: pct === 100 ? C.ok : C.dim, width: 36 }}>{pct}%</div>
-              <button onClick={() => { setStudyMi(mi); resetTutor(); setView("study"); }} style={btn("#122430", C.cyan, C.cyan)}>Study</button>
-              <button onClick={() => startDrill(mi)} style={btn("#2a2416", C.amber, C.amber)}>Drill</button>
+              <GButton variant="cyan" onClick={() => { setStudyMi(mi); resetTutor(); setView("study"); }}>Study</GButton>
+              <GButton variant="primary" onClick={() => startDrill(mi)}>Drill</GButton>
             </div>
           );
         })}
         <p style={{ color: C.dim, fontSize: 12, marginTop: 14 }}>Progress is session-only (resets on reload).</p>
-      </div></div>
+        </div>
+      </div>
     );
   }
 
@@ -560,12 +701,14 @@ export default function ENSATrainer() {
     const m = DATA[studyMi];
     return (
       <TooltipCtx.Provider value={tt}>
-      <div style={page}><div style={wrap}>
+      <div style={page}>
+        <BackgroundArt variant="study" />
+        <div style={wrap}>
         <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14, flexWrap: "wrap" }}>
-          <button onClick={() => setView("home")} style={btn(C.well, C.dim, C.line)}>← Modules</button>
-          <div style={{ fontFamily: MONO, fontSize: 12, color: C.cyan }}>Module {m.num}</div>
-          <div style={{ fontWeight: 800, fontSize: 18 }}>{m.title}</div>
-          <button onClick={() => startDrill(studyMi)} style={Object.assign(btn(C.amber, C.bg), { marginLeft: "auto" })}>Drill this module →</button>
+          <GButton variant="ghost" onClick={() => setView("home")}>← Modules</GButton>
+          <div style={{ fontFamily: MONO, fontSize: 12, color: C.violet }}>MOD {m.num}</div>
+          <div style={{ fontWeight: 800, fontFamily: HEAD, fontSize: 22 }}>{m.title}</div>
+          <div style={{ marginLeft: "auto" }}><GButton variant="primary" onClick={() => startDrill(studyMi)}>Drill this module →</GButton></div>
         </div>
 
         <div style={panel}>
@@ -575,7 +718,7 @@ export default function ENSATrainer() {
 
         {m.commands.length > 0 && (
           <div style={panel}>
-            <div style={secLabel(C.cyan)}>Commands — cheat sheet <span style={{ textTransform: "none", color: C.dim, fontWeight: 400 }}>(hover for details)</span></div>
+            <div style={secLabel(C.cyan)}>Commands — cheat sheet <span style={{ textTransform: "none", color: C.dim, fontWeight: 500, letterSpacing: 0 }}>(hover for details)</span></div>
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               {m.commands.map((cmd, i) => <CmdRow key={i} cmd={cmd} />)}
             </div>
@@ -584,7 +727,7 @@ export default function ENSATrainer() {
 
         {m.terms.length > 0 && (
           <div style={panel}>
-            <div style={secLabel(C.violet)}>Terms — glossary <span style={{ textTransform: "none", color: C.dim, fontWeight: 400 }}>(hover for details)</span></div>
+            <div style={secLabel(C.violet)}>Terms — glossary <span style={{ textTransform: "none", color: C.dim, fontWeight: 500, letterSpacing: 0 }}>(hover for details)</span></div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
               {m.terms.map((t, i) => <TermChip key={i} t={t} />)}
             </div>
@@ -596,17 +739,18 @@ export default function ENSATrainer() {
           <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
             {m.facts.map((f, i) => (
               <div key={i} style={{ display: "flex", gap: 9, alignItems: "baseline" }}>
-                <span style={{ color: C.ok, fontSize: 12, flexShrink: 0 }}>▸</span>
-                <span style={{ fontSize: 13, lineHeight: 1.55, color: "#c3d0dd" }}>{linkTermsNodes(f)}</span>
+                <span style={{ color: C.ok, fontSize: 13, flexShrink: 0 }}>▸</span>
+                <span style={{ fontSize: 13, lineHeight: 1.55, color: "#3a3550" }}>{linkTermsNodes(f)}</span>
               </div>
             ))}
           </div>
         </div>
 
         <div style={{ textAlign: "center", marginTop: 8 }}>
-          <button onClick={() => startDrill(studyMi)} style={btn(C.amber, C.bg)}>Drill this module →</button>
+          <GButton variant="primary" onClick={() => startDrill(studyMi)}>Drill this module →</GButton>
         </div>
-      </div></div>
+        </div>
+      </div>
       <TooltipHost />
       </TooltipCtx.Provider>
     );
@@ -615,78 +759,80 @@ export default function ENSATrainer() {
   // ── DRILL ──
   const p = getP(cur.key);
   const scopeName = scope === "all" ? "Full course" : scope === "weak" ? "Weak spots" : DATA[scope].title;
-  const inp = { flex: 1, background: C.dark, border: "1px solid " + C.line, borderRadius: 8, padding: "9px 12px", color: C.ink, fontSize: 13, fontFamily: "inherit", outline: "none" };
+  const inp = { flex: 1, background: "#fff", border: "1.5px solid " + C.line, borderRadius: 10, padding: "10px 13px", color: C.ink, fontSize: 13, fontFamily: BODY, outline: "none" };
   const isMatching = cur.kind === "matching";
   const isMulti = !isMatching && cur.type === "multiple";
   const isDone = isMatching ? matchDone !== null : mcLocked;
   const wasRight = isMatching ? !!matchDone : isMulti ? sameSet(picked, correctIndices(cur.options)) : picked.length === 1 && !!cur.options[picked[0]].correct;
 
   return (
-    <div style={page}><div style={wrap}>
+    <div style={page}>
+      <BackgroundArt variant="drill" />
+      <div style={wrap}>
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14, flexWrap: "wrap" }}>
-        <button onClick={() => setView("home")} style={btn(C.well, C.dim, C.line)}>← Modules</button>
-        <div style={{ fontWeight: 700 }}>{scopeName}</div>
-        <button onClick={() => { setStudyMi(cur.mi); resetTutor(); setView("study"); }} style={btn("#122430", C.cyan, C.cyan)}>Study this topic</button>
+        <GButton variant="ghost" onClick={() => setView("home")}>← Modules</GButton>
+        <div style={{ fontWeight: 700, fontFamily: HEAD, fontSize: 16 }}>{scopeName}</div>
+        <GButton variant="cyan" onClick={() => { setStudyMi(cur.mi); resetTutor(); setView("study"); }}>Study this topic</GButton>
         <div style={{ marginLeft: "auto", fontFamily: MONO, fontSize: 12, color: C.dim }}>answered {answered} · {answered ? Math.round((correct / answered) * 100) : 0}% · mastered {masteredCount}/{ALL.length}</div>
       </div>
 
-      <div style={panel}>
+      <div style={panel} key={cur.key}>
         <div style={{ display: "flex", gap: 8, marginBottom: 10, alignItems: "center", flexWrap: "wrap" }}>
-          <span style={{ fontFamily: MONO, fontSize: 11, color: C.cyan }}>Module {DATA[cur.mi].num} · {DATA[cur.mi].title}</span>
+          <span style={{ fontFamily: MONO, fontSize: 11, color: C.violet }}>MOD {DATA[cur.mi].num} · {DATA[cur.mi].title}</span>
           <span style={chip(BOX_COLOR[p.box])}>{BOX_NAME[p.box]}</span>
           {p.wrong > 0 && <span style={{ fontFamily: MONO, fontSize: 11, color: C.bad }}>missed {p.wrong}x</span>}
           {isMatching && <span style={chip(C.violet)}>drag to match</span>}
           {isMulti && <span style={chip(C.amber)}>select all correct</span>}
         </div>
-        <Html html={cur.questionHtml} style={{ fontSize: 16, fontWeight: 600, lineHeight: 1.5, marginBottom: 12 }} />
+        <Html html={cur.questionHtml} style={{ fontSize: 16.5, fontFamily: HEAD, fontWeight: 600, lineHeight: 1.5, marginBottom: 12, color: C.ink }} />
 
         {isMatching ? (
           <MatchQuestion choices={cur.choices} rows={cur.rows} locked={matchDone !== null} onCheck={answerMatch} />
         ) : (
           <div style={{ display: "grid", gap: 8 }}>
             {cur.options.map((opt, i) => {
-              let bd = C.line, bg = C.well, fg = C.ink;
+              let bd = C.line, bg = "#fff", fg = C.ink;
               const selected = picked.includes(i);
               if (mcLocked) {
-                if (opt.correct) { bd = C.ok; bg = "#12241a"; fg = C.ok; }
-                else if (selected) { bd = C.bad; bg = "#2a1616"; fg = C.bad; }
+                if (opt.correct) { bd = C.ok; bg = "#ecfdf5"; fg = "#047857"; }
+                else if (selected) { bd = C.bad; bg = "#fef2f2"; fg = "#b91c1c"; }
                 else fg = C.dim;
               } else if (isMulti && selected) {
-                bd = C.cyan; bg = "#122430"; fg = C.cyan;
+                bd = C.violet; bg = "#f5f3ff"; fg = C.violet;
               }
               return (
                 <button
                   key={i}
                   data-testid="mc-option"
                   onClick={() => (isMulti ? toggleMulti(i) : chooseSingle(i))}
-                  style={{ textAlign: "left", padding: "11px 14px", borderRadius: 8, border: "1px solid " + bd, background: bg, color: fg, fontSize: 14, cursor: mcLocked ? "default" : "pointer", transition: "all .15s", display: "flex", gap: 10, alignItems: "flex-start" }}
+                  style={{ textAlign: "left", padding: "12px 15px", borderRadius: 12, border: "1.5px solid " + bd, background: bg, color: fg, fontSize: 14, fontFamily: BODY, cursor: mcLocked ? "default" : "pointer", transition: "all .15s", display: "flex", gap: 10, alignItems: "flex-start", boxShadow: "0 2px 10px -8px rgba(76,29,149,.3)" }}
                 >
-                  {isMulti && <span style={{ fontFamily: MONO, fontSize: 12, flexShrink: 0, marginTop: 2 }}>{selected ? "☑" : "☐"}</span>}
+                  {isMulti && <span style={{ fontFamily: MONO, fontSize: 13, flexShrink: 0, marginTop: 2 }}>{selected ? "☑" : "☐"}</span>}
                   <Html html={opt.html} style={{ flex: 1 }} />
                 </button>
               );
             })}
             {isMulti && !mcLocked && (
-              <button data-testid="submit-multi" onClick={submitMulti} disabled={!picked.length} style={btnS(picked.length ? C.amber : C.panel, picked.length ? C.bg : C.dim, picked.length ? C.amber : C.line)}>
+              <GButton data-testid="submit-multi" variant={picked.length ? "primary" : "ghost"} onClick={submitMulti} disabled={!picked.length}>
                 Submit answer
-              </button>
+              </GButton>
             )}
           </div>
         )}
 
         {isDone && (
-          <div style={{ marginTop: 14 }}>
-            {!wasRight && <div style={{ fontFamily: MONO, fontSize: 12, color: C.bad, marginBottom: 6 }}>Wrong — reset to "new". This one comes back within the next few cards.</div>}
-            <div style={{ fontSize: 13.5, color: "#b8c7d6", lineHeight: 1.6, margin: "0 0 12px", borderLeft: "3px solid " + (wasRight ? C.ok : C.bad), paddingLeft: 10 }}>
+          <div style={{ marginTop: 16 }}>
+            {!wasRight && <div style={{ fontFamily: HEAD, fontWeight: 700, fontSize: 12.5, color: C.bad, marginBottom: 8, letterSpacing: .3 }}>✗ WRONG — reset to "new". This one comes back within the next few cards.</div>}
+            <div style={{ fontSize: 13.5, color: "#3a3550", lineHeight: 1.6, margin: "0 0 12px", background: wasRight ? "rgba(16,185,129,.06)" : "rgba(239,68,68,.06)", borderLeft: "3px solid " + (wasRight ? C.ok : C.bad), borderRadius: 8, padding: "10px 12px" }}>
               <Html html={cur.explanationHtml} />
             </div>
 
             {convo.length > 0 && (
-              <div style={{ background: C.dark, border: "1px solid " + C.cyan, borderRadius: 8, padding: 14, marginBottom: 12 }}>
+              <div style={{ background: "linear-gradient(160deg,#1c1533,#0d0b1a)", border: "1px solid rgba(139,92,246,.4)", borderRadius: 14, padding: 16, marginBottom: 12, boxShadow: "0 14px 34px -18px rgba(76,29,149,.5)" }}>
                 {convo.map((mm, i) => (
                   <div key={i} style={{ marginBottom: i < convo.length - 1 ? 12 : 0 }}>
-                    <div style={{ fontFamily: MONO, fontSize: 10.5, color: mm.role === "tutor" ? C.cyan : C.amber, marginBottom: 4 }}>{mm.role === "tutor" ? "TUTOR" : "YOU"}</div>
-                    <p style={{ fontSize: 13.5, color: C.ink, lineHeight: 1.7, margin: 0, whiteSpace: "pre-wrap" }}>{mm.text}</p>
+                    <div style={{ fontFamily: MONO, fontSize: 10.5, color: mm.role === "tutor" ? "#5ef2c0" : C.amber, marginBottom: 4, fontWeight: 700, letterSpacing: .5 }}>{mm.role === "tutor" ? "TUTOR" : "YOU"}</div>
+                    <p style={{ fontSize: 13.5, color: "#f0eaff", lineHeight: 1.7, margin: 0, whiteSpace: "pre-wrap", fontFamily: BODY }}>{mm.text}</p>
                   </div>
                 ))}
               </div>
@@ -694,17 +840,18 @@ export default function ENSATrainer() {
             {deepErr && <div style={{ fontFamily: MONO, fontSize: 12, color: C.bad, marginBottom: 10 }}>Tutor call failed — try again.</div>}
 
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 10 }}>
-              <button data-testid="next" onClick={next} style={btn(C.amber, C.bg)}>Next</button>
-              {convo.length === 0 && <button onClick={breakdown} disabled={deepLoading} style={btn(C.well, deepLoading ? C.dim : C.cyan, deepLoading ? C.line : C.cyan)}>{deepLoading ? "Thinking…" : "Break it down"}</button>}
+              <GButton data-testid="next" variant="primary" onClick={next}>Next →</GButton>
+              {convo.length === 0 && <GButton variant="cyan" onClick={breakdown} disabled={deepLoading}>{deepLoading ? "Thinking…" : "✨ Break it down"}</GButton>}
             </div>
 
             <div style={{ display: "flex", gap: 8 }}>
               <input value={ask} onChange={e => setAsk(e.target.value)} onKeyDown={e => { if (e.key === "Enter") sendAsk(); }} placeholder="Ask your own question about this…" style={inp} />
-              <button onClick={sendAsk} disabled={deepLoading || !ask.trim()} style={btn(ask.trim() && !deepLoading ? "#122430" : C.panel, ask.trim() && !deepLoading ? C.cyan : C.dim, C.line)}>{deepLoading ? "…" : "Ask"}</button>
+              <GButton variant={ask.trim() && !deepLoading ? "cyan" : "ghost"} onClick={sendAsk} disabled={deepLoading || !ask.trim()}>{deepLoading ? "…" : "Ask"}</GButton>
             </div>
           </div>
         )}
       </div>
-    </div></div>
+      </div>
+    </div>
   );
 }
