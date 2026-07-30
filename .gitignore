@@ -16,3 +16,12 @@ desktop.ini
 .env
 .env.local
 .env.*.local
+
+# Local screenshot output from scripts/shoot.mjs
+shots/
+
+# CCNA2 trainer — kept local only, not published to the site
+ccna2.html
+ccna2-src/
+js/ccna2.bundle*.js
+scripts/build-ccna2.mjs
