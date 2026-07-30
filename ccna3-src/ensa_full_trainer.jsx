@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useContext, createContext } from "react";
 import DATA from "./data/ccna3-data.json";
 
 // ══ console palette (matches the CCNA2/SRWE trainer) ══
@@ -240,10 +240,164 @@ function sameSet(a, b) {
 }
 
 // ══════════════════════════════════════════════════════════
+//  TOOLTIP ENGINE — ported verbatim from cheat-sheet.html:
+//  every glossary term is hoverable everywhere it appears (term
+//  chips, command rows, and inline mentions inside facts/descriptions),
+//  showing a floating definition card. Hover to preview, click/tap or
+//  focus to pin it open, Escape or an outside click to unpin.
+// ══════════════════════════════════════════════════════════
+const GLOSSARY = new Map();
+DATA.forEach((m) => m.terms.forEach((t) => { if (!GLOSSARY.has(t.acronym)) GLOSSARY.set(t.acronym, t); }));
+const TERM_REGEX = (() => {
+  const keys = Array.from(GLOSSARY.keys()).sort((a, b) => b.length - a.length).map((k) => k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+  return keys.length ? new RegExp("\\b(" + keys.join("|") + ")\\b", "g") : null;
+})();
+
+const TooltipCtx = createContext(null);
+
+function useTooltip() {
+  const [tip, setTip] = useState(null); // { head, body, mod }
+  const [pos, setPos] = useState({ left: 0, top: 0 });
+  const [pinnedKey, setPinnedKey] = useState(null);
+  const tipRef = useRef(null);
+  const anchorRect = useRef(null);
+
+  useEffect(() => {
+    if (!tip || !tipRef.current) return;
+    const tw = tipRef.current.offsetWidth, th = tipRef.current.offsetHeight;
+    const r = anchorRect.current;
+    let left = r.left + r.width / 2 - tw / 2;
+    let top = r.top - th - 10;
+    if (top < 8) top = r.bottom + 10;
+    left = Math.max(8, Math.min(left, window.innerWidth - tw - 8));
+    setPos({ left, top });
+  }, [tip]);
+
+  useEffect(() => {
+    if (!pinnedKey) return;
+    const onDocClick = (e) => { if (tipRef.current && tipRef.current.contains(e.target)) return; setPinnedKey(null); setTip(null); };
+    const onKey = (e) => { if (e.key === "Escape") { setPinnedKey(null); setTip(null); } };
+    document.addEventListener("click", onDocClick, true);
+    document.addEventListener("keydown", onKey);
+    return () => { document.removeEventListener("click", onDocClick, true); document.removeEventListener("keydown", onKey); };
+  }, [pinnedKey]);
+
+  const show = (e, content) => { if (pinnedKey) return; anchorRect.current = e.currentTarget.getBoundingClientRect(); setTip(content); };
+  const hide = () => { if (pinnedKey) return; setTip(null); };
+  const triggerProps = (key, content) => ({
+    tabIndex: 0,
+    onMouseEnter: (e) => show(e, content),
+    onMouseLeave: hide,
+    onFocus: (e) => show(e, content),
+    onBlur: hide,
+    onClick: (e) => {
+      e.stopPropagation();
+      if (pinnedKey === key) { setPinnedKey(null); setTip(null); return; }
+      anchorRect.current = e.currentTarget.getBoundingClientRect();
+      setPinnedKey(key); setTip(content);
+    },
+  });
+
+  return { tip, pos, pinnedKey, tipRef, triggerProps };
+}
+
+function linkTermsNodes(text, skipAcr) {
+  if (!TERM_REGEX || !text) return [text];
+  const out = [];
+  let last = 0, m;
+  TERM_REGEX.lastIndex = 0;
+  while ((m = TERM_REGEX.exec(text))) {
+    if (skipAcr && m[0] === skipAcr) continue;
+    if (m.index > last) out.push(text.slice(last, m.index));
+    out.push(<TermLink key={m.index + "-" + m[0]} acr={m[0]} />);
+    last = m.index + m[0].length;
+  }
+  if (last < text.length) out.push(text.slice(last));
+  return out;
+}
+
+const termLinkStyle = { borderBottom: "1.5px dotted " + C.cyan, cursor: "help", fontWeight: 600 };
+
+function TermLink({ acr }) {
+  const t = GLOSSARY.get(acr);
+  const tt = useContext(TooltipCtx);
+  if (!t || !tt) return acr;
+  const key = "term:" + acr + ":" + t.module;
+  const content = { head: t.acronym + " — " + t.full, body: t.description, mod: "M" + t.module };
+  const pinned = tt.pinnedKey === key;
+  return (
+    <span style={{ ...termLinkStyle, background: pinned ? "rgba(95,215,255,.18)" : "transparent" }} {...tt.triggerProps(key, content)}>{acr}</span>
+  );
+}
+
+function TooltipHost() {
+  const tt = useContext(TooltipCtx);
+  if (!tt || !tt.tip) return null;
+  return (
+    <div
+      ref={tt.tipRef}
+      data-testid="tooltip"
+      style={{
+        position: "fixed", left: tt.pos.left, top: tt.pos.top, maxWidth: 340,
+        background: C.ink, color: C.bg, padding: "10px 12px", borderRadius: 8,
+        fontSize: 12.5, lineHeight: 1.45, boxShadow: "0 12px 32px -8px rgba(0,0,0,.5)",
+        zIndex: 1000, pointerEvents: tt.pinnedKey ? "auto" : "none",
+      }}
+    >
+      <div style={{ fontFamily: MONO, fontWeight: 700, marginBottom: 3, fontSize: 12 }}>
+        {tt.tip.head}
+        {tt.tip.mod && <span style={{ float: "right", opacity: .6, fontWeight: 400 }}>{tt.tip.mod}</span>}
+      </div>
+      <div>{linkTermsNodes(tt.tip.body)}</div>
+    </div>
+  );
+}
+
+function TermChip({ t }) {
+  const tt = useContext(TooltipCtx);
+  const key = "termchip:" + t.acronym + ":" + t.module;
+  const content = { head: t.acronym + " — " + t.full, body: t.description, mod: "M" + t.module };
+  const pinned = tt.pinnedKey === key;
+  return (
+    <div
+      {...tt.triggerProps(key, content)}
+      style={{
+        display: "flex", flexDirection: "column", gap: 2, padding: "8px 10px", borderRadius: 6, cursor: "help",
+        background: pinned ? "rgba(185,140,255,.14)" : C.well, border: "1px solid " + (pinned ? C.violet : C.line), minWidth: 150,
+      }}
+    >
+      <span style={{ fontFamily: MONO, fontSize: 12, color: C.violet, fontWeight: 700 }}>{t.acronym}</span>
+      <span style={{ fontSize: 12, color: "#c3d0dd" }}>{t.full}</span>
+    </div>
+  );
+}
+
+function CmdRow({ cmd }) {
+  const tt = useContext(TooltipCtx);
+  const key = "cmd:" + cmd.command + ":" + cmd.module;
+  const content = { head: cmd.command, body: cmd.description, mod: "M" + cmd.module };
+  const pinned = tt.pinnedKey === key;
+  return (
+    <div
+      {...tt.triggerProps(key, content)}
+      style={{
+        display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", cursor: "help",
+        padding: "6px 8px", borderRadius: 6, background: pinned ? "rgba(95,215,255,.10)" : "transparent",
+        border: "1px solid " + (pinned ? C.cyan : "transparent"),
+      }}
+    >
+      <CodeBlock code={cmd.command} />
+      {cmd.mode && <span style={chip(C.violet)}>{cmd.mode}</span>}
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════
 //  ENGINE + APP
 // ══════════════════════════════════════════════════════════
 export default function ENSATrainer() {
   useQhtmlStyle();
+  const tt = useTooltip();
   const [view, setView] = useState("home");
   const [scope, setScope] = useState("all");
   const [studyMi, setStudyMi] = useState(0);
@@ -405,6 +559,7 @@ export default function ENSATrainer() {
   if (view === "study") {
     const m = DATA[studyMi];
     return (
+      <TooltipCtx.Provider value={tt}>
       <div style={page}><div style={wrap}>
         <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14, flexWrap: "wrap" }}>
           <button onClick={() => setView("home")} style={btn(C.well, C.dim, C.line)}>← Modules</button>
@@ -420,31 +575,18 @@ export default function ENSATrainer() {
 
         {m.commands.length > 0 && (
           <div style={panel}>
-            <div style={secLabel(C.cyan)}>Commands — cheat sheet</div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {m.commands.map((cmd, i) => (
-                <div key={i}>
-                  <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginBottom: 4 }}>
-                    <CodeBlock code={cmd.command} />
-                    {cmd.mode && <span style={chip(C.violet)}>{cmd.mode}</span>}
-                  </div>
-                  <p style={{ fontSize: 13, lineHeight: 1.55, color: "#c3d0dd", margin: "2px 0 0" }}>{cmd.description}</p>
-                </div>
-              ))}
+            <div style={secLabel(C.cyan)}>Commands — cheat sheet <span style={{ textTransform: "none", color: C.dim, fontWeight: 400 }}>(hover for details)</span></div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              {m.commands.map((cmd, i) => <CmdRow key={i} cmd={cmd} />)}
             </div>
           </div>
         )}
 
         {m.terms.length > 0 && (
           <div style={panel}>
-            <div style={secLabel(C.violet)}>Terms — glossary</div>
-            <div style={{ display: "grid", gap: 10 }}>
-              {m.terms.map((t, i) => (
-                <div key={i} style={{ display: "flex", gap: 10 }}>
-                  <span style={{ fontFamily: MONO, fontSize: 12.5, color: C.violet, flexShrink: 0, minWidth: 64, fontWeight: 700 }}>{t.acronym}</span>
-                  <span style={{ fontSize: 13, lineHeight: 1.55, color: "#c3d0dd" }}><strong style={{ color: C.ink }}>{t.full}</strong> — {t.description}</span>
-                </div>
-              ))}
+            <div style={secLabel(C.violet)}>Terms — glossary <span style={{ textTransform: "none", color: C.dim, fontWeight: 400 }}>(hover for details)</span></div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+              {m.terms.map((t, i) => <TermChip key={i} t={t} />)}
             </div>
           </div>
         )}
@@ -455,7 +597,7 @@ export default function ENSATrainer() {
             {m.facts.map((f, i) => (
               <div key={i} style={{ display: "flex", gap: 9, alignItems: "baseline" }}>
                 <span style={{ color: C.ok, fontSize: 12, flexShrink: 0 }}>▸</span>
-                <span style={{ fontSize: 13, lineHeight: 1.55, color: "#c3d0dd" }}>{f}</span>
+                <span style={{ fontSize: 13, lineHeight: 1.55, color: "#c3d0dd" }}>{linkTermsNodes(f)}</span>
               </div>
             ))}
           </div>
@@ -465,6 +607,8 @@ export default function ENSATrainer() {
           <button onClick={() => startDrill(studyMi)} style={btn(C.amber, C.bg)}>Drill this module →</button>
         </div>
       </div></div>
+      <TooltipHost />
+      </TooltipCtx.Provider>
     );
   }
 
