@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useContext, createContext, useMemo } from "react";
+import { createPortal } from "react-dom";
 import DATA from "./data/ccna3-data.json";
 import SLIDES from "./data/ccna3-slides.json";
 
@@ -515,10 +516,13 @@ function MatchQuestion({ choices, rows, locked, onCheck }) {
         </GButton>
       )}
 
-      {dragging && (
-        <div style={{ position: "fixed", left: dragging.x - 40, top: dragging.y - 18, pointerEvents: "none", zIndex: 999, width: 120 }}>
+      {dragging && createPortal(
+        // Portaled to <body>: an ancestor's backdrop-filter would otherwise make
+        // position:fixed resolve against the panel, offsetting the card from the cursor.
+        <div style={{ position: "fixed", left: dragging.x - 60, top: dragging.y - 18, pointerEvents: "none", zIndex: 999, width: 120 }}>
           <div style={{ ...chipStyle(dragging.idx, false), textAlign: "center", boxShadow: "0 10px 26px -8px rgba(76,29,149,.5)" }}>{chipLabel(dragging.idx)}</div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
@@ -1225,6 +1229,13 @@ export default function ENSATrainer() {
   }, [teachMi]);
 
   const getP = (k) => prog[k] || { box: 0, wrong: 0, seen: 0 };
+  // Fresh display order for the answer options on every presentation of a
+  // question, so repeats never show A/B/C/D in the same positions. Values are
+  // original option indices — picked/correctness logic stays index-based.
+  const optOrder = useMemo(
+    () => (cur && cur.kind === "mc" ? shuffledIndices(cur.options.length) : []),
+    [cur && cur.key] // eslint-disable-line react-hooks/exhaustive-deps
+  );
   const poolFor = (sc) => sc === "all" ? ALL : sc === "weak" ? ALL.filter(q => { const p = getP(q.key); return p.wrong > 0 && p.box < 3; }) : ALL.filter(q => q.mi === sc);
 
   // Drill order: new -> learning -> review -> mastered, random within each
@@ -1323,10 +1334,14 @@ export default function ENSATrainer() {
       messages.push({ role: "user", content: ctx + " The student is asking a follow-up. Prior exchange: " + convo.map(m => m.role + ": " + m.text).join(" || ") + " || Student now asks: " + userMsg });
     }
     const res = await fetch("/api/tutor", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ messages, images: contextDesc.images || [] }) });
-    if (!res.ok) throw new Error("tutor request failed");
+    if (!res.ok) {
+      let detail = "";
+      try { detail = (await res.json()).detail || ""; } catch (e) { /* non-JSON error body */ }
+      throw new Error(detail || "request failed (HTTP " + res.status + ")");
+    }
     const data = await res.json();
     const txt = (data.text || "").trim();
-    if (!txt) throw new Error("empty");
+    if (!txt) throw new Error("empty reply");
     return txt;
   };
 
@@ -1334,7 +1349,7 @@ export default function ENSATrainer() {
     if (deepLoading || !contextDesc) return;
     setDeepLoading(true); setDeepErr(false);
     try { const txt = await callLLM(contextDesc, null, true); setDeep(txt); setConvo([{ role: "tutor", text: txt }]); }
-    catch (e) { setDeepErr(true); }
+    catch (e) { setDeepErr(e && e.message ? e.message : true); }
     setDeepLoading(false);
   };
 
@@ -1345,7 +1360,7 @@ export default function ENSATrainer() {
     const newConvo = convo.concat([{ role: "student", text: q }]);
     setConvo(newConvo); setAsk("");
     try { const txt = await callLLM(contextDesc, q, false); setConvo(newConvo.concat([{ role: "tutor", text: txt }])); if (!deep) setDeep(txt); }
-    catch (e) { setDeepErr(true); }
+    catch (e) { setDeepErr(e && e.message ? e.message : true); }
     setDeepLoading(false);
   };
 
@@ -1380,7 +1395,7 @@ export default function ENSATrainer() {
           ))}
         </div>
       )}
-      {deepErr && <div style={{ fontFamily: MONO, fontSize: 12, color: C.bad, marginBottom: 10 }}>Tutor call failed — try again.</div>}
+      {deepErr && <div style={{ fontFamily: MONO, fontSize: 12, color: C.bad, marginBottom: 10 }}>Tutor call failed — try again.{typeof deepErr === "string" && <span style={{ color: C.dim }}> [{deepErr}]</span>}</div>}
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 10 }}>
         {extraButton}
         {convo.length === 0 && <GButton variant="cyan" onClick={() => breakdown(contextDesc)} disabled={deepLoading}>{deepLoading ? "Thinking…" : (breakdownLabel || "✨ Break it down")}</GButton>}
@@ -1610,7 +1625,8 @@ export default function ENSATrainer() {
           <MatchQuestion choices={cur.choices} rows={cur.rows} locked={matchDone !== null} onCheck={answerMatch} />
         ) : (
           <div style={{ display: "grid", gap: 8 }}>
-            {cur.options.map((opt, i) => {
+            {optOrder.map((i) => {
+              const opt = cur.options[i];
               let bd = C.line, bg = "#fff", fg = C.ink;
               const selected = picked.includes(i);
               if (mcLocked) {

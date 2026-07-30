@@ -178,7 +178,7 @@ async function handleTutor(req, res) {
   }
 
   console.error(`[tutor] all ${models.length} model(s) failed; last: ${lastFailure}`);
-  sendJson(res, 502, { error: "upstream error" });
+  sendJson(res, 502, { error: "upstream error", detail: lastFailure });
 }
 
 const server = http.createServer((req, res) => {
