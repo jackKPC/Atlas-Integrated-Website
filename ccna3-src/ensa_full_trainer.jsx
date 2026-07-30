@@ -1,12 +1,13 @@
 import { useState, useEffect, useRef, useContext, createContext, useMemo } from "react";
 import DATA from "./data/ccna3-data.json";
+import SLIDES from "./data/ccna3-slides.json";
 
-// ══ HOLO palette — light, futuristic ══
+// ══ HOLO palette — light, futuristic (blue/yellow) ══
 const C = {
-  bg: "#f6f4ff", well: "#f0edff", panel: "rgba(255,255,255,0.74)",
-  line: "rgba(124,58,237,0.18)", ink: "#171029", dim: "#6c6580",
-  amber: "#ff8a3d", cyan: "#06b6d4", ok: "#10b981", bad: "#ef4444", violet: "#7c3aed",
-  magenta: "#ec4899", dark: "#0d0b1a",
+  bg: "#f2f6ff", well: "#e9f0ff", panel: "rgba(255,255,255,0.74)",
+  line: "rgba(37,99,235,0.18)", ink: "#131a2c", dim: "#647089",
+  amber: "#ff8a3d", cyan: "#06b6d4", ok: "#10b981", bad: "#ef4444", violet: "#2563eb",
+  magenta: "#d4a017", dark: "#0d0b1a",
 };
 const DISPLAY = "'Orbitron', sans-serif";
 const HEAD = "'Rajdhani', sans-serif";
@@ -17,7 +18,7 @@ const box = (extra) => Object.assign({ background: C.well, border: "1px solid " 
 const chip = (col) => ({ fontFamily: HEAD, fontWeight: 700, fontSize: 11.5, padding: "3px 9px", borderRadius: 999, border: "1px solid " + col, color: col, display: "inline-block", letterSpacing: .3 });
 const gradText = {
   fontFamily: DISPLAY, fontWeight: 900,
-  background: "linear-gradient(90deg,#7c3aed,#06b6d4,#ec4899,#7c3aed)",
+  background: "linear-gradient(90deg,#2563eb,#06b6d4,#eab308,#2563eb)",
   backgroundSize: "300% 100%", WebkitBackgroundClip: "text", backgroundClip: "text",
   color: "transparent", animation: "gradient-flow 6s ease infinite",
 };
@@ -44,8 +45,18 @@ function useGlobalStyle() {
       @keyframes grid-drift { from{background-position:0 0, 0 0} to{background-position:46px 46px, 46px 46px} }
       @keyframes sweep { 0%{left:-35%} 55%{left:130%} 100%{left:130%} }
       @keyframes particle-rise { 0%{transform:translateY(0); opacity:0} 10%{opacity:.65} 88%{opacity:.5} 100%{transform:translateY(-105vh); opacity:0} }
+      @keyframes slide-in-r { from{opacity:0; transform:translateX(28px)} to{opacity:1; transform:translateX(0)} }
+      @keyframes slide-in-l { from{opacity:0; transform:translateX(-28px)} to{opacity:1; transform:translateX(0)} }
+      @keyframes boot-globe-in { from{opacity:0; transform:scale(.3)} to{opacity:1; transform:scale(1)} }
+      @keyframes boot-scan { 0%{transform:translateY(-120%)} 100%{transform:translateY(120%)} }
+      @keyframes boot-fade-up { from{opacity:0; transform:translateY(10px)} to{opacity:1; transform:translateY(0)} }
+      @keyframes boot-line-in { from{opacity:0; transform:translateX(-8px)} to{opacity:1; transform:translateX(0)} }
+      @keyframes boot-progress { from{width:0%} to{width:100%} }
+      @keyframes boot-wipe { from{clip-path:circle(140% at 50% 50%)} to{clip-path:circle(0% at 50% 50%)} }
+      @keyframes matrix-fall { from{transform:translateY(-100%)} to{transform:translateY(100vh)} }
+      @keyframes terminal-cycle { 0%{opacity:0; transform:translateY(4px)} 8%{opacity:1; transform:translateY(0)} 70%{opacity:1} 85%{opacity:0} 100%{opacity:0} }
       @media (max-width: 760px) { .wire-deco { display:none !important; } }
-      ::selection { background: rgba(124,58,237,.25); }
+      ::selection { background: rgba(37,99,235,.25); }
       .qhtml img { max-width: 100%; height: auto; display: block; margin: 12px 0; border-radius: 12px; border: 1px solid ${C.line}; box-shadow: 0 10px 30px -14px rgba(76,29,149,.35); }
       .qhtml p { margin: 0 0 10px; }
       .qhtml p:last-child { margin-bottom: 0; }
@@ -115,13 +126,65 @@ function WireOrbit({ style, size = 170, color = C.magenta }) {
     </svg>
   );
 }
-function WireCircuit({ style, w = 220, h = 120, color = C.violet }) {
+const CIRCUIT_PATHS = [
+  { d: "M4 60 H50 V20 H110 V90 H160 V50 H216", nodes: [[50, 60], [110, 20], [110, 90], [160, 50]] },
+  { d: "M4 20 H40 V80 H90 V40 H150 V100 H216", nodes: [[40, 20], [40, 80], [90, 80], [150, 40]] },
+  { d: "M4 90 H60 V30 H120 V70 H180 V10 H216", nodes: [[60, 90], [60, 30], [120, 30], [180, 70]] },
+];
+function WireCircuit({ style, w = 220, h = 120, color = C.violet, variant = 0 }) {
+  const p = CIRCUIT_PATHS[variant % CIRCUIT_PATHS.length];
   return (
     <svg viewBox={`0 0 ${w} ${h}`} width={w} height={h}
       style={{ display: "block", opacity: .16, pointerEvents: "none", ...style }}>
-      <path d="M4 60 H50 V20 H110 V90 H160 V50 H216" fill="none" stroke={color} strokeWidth="1.4" strokeDasharray="6 6" strokeDashoffset="240" style={{ animation: "draw-path 4s linear infinite" }} />
-      {[[50, 60], [110, 20], [110, 90], [160, 50]].map(([x, y], i) => <circle key={i} cx={x} cy={y} r="3.4" fill={color} style={{ animation: "pulse-op 2.4s ease-in-out infinite" }} />)}
+      <path d={p.d} fill="none" stroke={color} strokeWidth="1.4" strokeDasharray="6 6" strokeDashoffset="240" style={{ animation: "draw-path 4s linear infinite" }} />
+      {p.nodes.map(([x, y], i) => <circle key={i} cx={x} cy={y} r="3.4" fill={color} style={{ animation: "pulse-op 2.4s ease-in-out infinite" }} />)}
     </svg>
+  );
+}
+
+// ══════════════════════════════════════════════════════════
+//  MATRIX RAIN + TERMINAL TICKER — extra ambient decoration.
+// ══════════════════════════════════════════════════════════
+function MatrixRain({ columns = 16, style }) {
+  const cols = useMemo(() => Array.from({ length: columns }, (_, i) => ({
+    left: (i / columns) * 100 + (Math.random() * 3 - 1.5),
+    dur: 7 + Math.random() * 9,
+    delay: -(Math.random() * 16),
+    chars: Array.from({ length: 16 + Math.floor(Math.random() * 10) }, () => (Math.random() < 0.5 ? "0" : "1")),
+    op: 0.05 + Math.random() * 0.07,
+  })), [columns]);
+  return (
+    <div className="wire-deco" style={{ position: "absolute", inset: 0, overflow: "hidden", ...style }}>
+      {cols.map((c, i) => (
+        <div key={i} style={{
+          position: "absolute", left: c.left + "%", top: 0, fontFamily: MONO, fontSize: 13, lineHeight: 1.35,
+          color: C.violet, opacity: c.op, whiteSpace: "pre", textAlign: "center",
+          animation: `matrix-fall ${c.dur}s linear ${c.delay}s infinite`,
+        }}>
+          {c.chars.map((ch, j) => <div key={j}>{ch}</div>)}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+const TERMINAL_LINES = [
+  "show ip ospf neighbor",
+  "configure terminal",
+  "router ospf 1",
+  "network 10.0.0.0 0.0.0.255 area 0",
+  "ip access-list extended BLOCK_TELNET",
+  "show ip nat translations",
+  "crypto isakmp policy 10",
+  "show cdp neighbors detail",
+];
+function TerminalTicker({ style }) {
+  return (
+    <div className="wire-deco" style={{ fontFamily: MONO, fontSize: 11, lineHeight: 2, color: C.violet, opacity: .55, ...style }}>
+      {TERMINAL_LINES.map((l, i) => (
+        <div key={i} style={{ opacity: 0, whiteSpace: "nowrap", animation: `terminal-cycle 9s ease-in-out ${i * 1.15}s infinite` }}>› {l}</div>
+      ))}
+    </div>
   );
 }
 
@@ -176,7 +239,9 @@ function BackgroundArt({ variant }) {
         <ParallaxLayer style={{ top: -40, right: -50 }} scrollFactor={.08} mouseFactor={10}><WireGlobe size={260} /></ParallaxLayer>
         <ParallaxLayer style={{ top: 260, left: -40 }} scrollFactor={-.06} mouseFactor={14}><WireHex size={120} color={C.cyan} /></ParallaxLayer>
         <ParallaxLayer style={{ bottom: 40, right: -30 }} scrollFactor={.13} mouseFactor={-12}><WireOrbit size={170} color={C.magenta} /></ParallaxLayer>
-        <ParallaxLayer style={{ bottom: -10, left: -20 }} scrollFactor={-.1} mouseFactor={8}><WireCircuit w={220} h={110} color={C.violet} /></ParallaxLayer>
+        <ParallaxLayer style={{ bottom: -10, left: -20 }} scrollFactor={-.1} mouseFactor={8}><WireCircuit w={220} h={110} color={C.violet} variant={0} /></ParallaxLayer>
+        <ParallaxLayer style={{ top: 40, left: -30 }} scrollFactor={.05} mouseFactor={-6}><WireCircuit w={180} h={90} color={C.cyan} variant={1} /></ParallaxLayer>
+        <ParallaxLayer style={{ bottom: 30, left: 4 }} scrollFactor={-.04} mouseFactor={4}><TerminalTicker style={{ width: 220 }} /></ParallaxLayer>
       </>
     );
   }
@@ -185,6 +250,8 @@ function BackgroundArt({ variant }) {
       <>
         <ParallaxLayer style={{ top: 40, right: -40 }} scrollFactor={.06} mouseFactor={10}><WireHex size={110} color={C.violet} /></ParallaxLayer>
         <ParallaxLayer style={{ bottom: 100, left: -50 }} scrollFactor={-.08} mouseFactor={-10}><WireOrbit size={140} color={C.cyan} /></ParallaxLayer>
+        <ParallaxLayer style={{ top: 300, right: 6 }} scrollFactor={.05} mouseFactor={-6}><WireCircuit w={180} h={90} color={C.magenta} variant={2} /></ParallaxLayer>
+        <ParallaxLayer style={{ bottom: 24, left: 4 }} scrollFactor={-.03} mouseFactor={4}><TerminalTicker style={{ width: 210 }} /></ParallaxLayer>
       </>
     );
   }
@@ -192,6 +259,8 @@ function BackgroundArt({ variant }) {
     <>
       <ParallaxLayer style={{ bottom: -60, right: -60 }} scrollFactor={.07} mouseFactor={10}><WireGlobe size={200} dur={80} color={C.cyan} /></ParallaxLayer>
       <ParallaxLayer style={{ top: 100, left: -40 }} scrollFactor={-.05} mouseFactor={-8}><WireHex size={100} color={C.magenta} /></ParallaxLayer>
+      <ParallaxLayer style={{ bottom: 40, left: 4 }} scrollFactor={-.04} mouseFactor={4}><WireCircuit w={180} h={90} color={C.violet} variant={1} /></ParallaxLayer>
+      <ParallaxLayer style={{ top: 30, right: 6 }} scrollFactor={.04} mouseFactor={-4}><TerminalTicker style={{ width: 200 }} /></ParallaxLayer>
     </>
   );
 }
@@ -221,13 +290,14 @@ function FixedBackdrop({ variant }) {
     <div style={{ position: "fixed", inset: 0, zIndex: 0, overflow: "hidden", pointerEvents: "none" }}>
       <div style={{
         position: "absolute", inset: 0,
-        background: "radial-gradient(circle at 12% 15%, rgba(139,92,246,.14), transparent 42%), radial-gradient(circle at 88% 12%, rgba(6,182,212,.14), transparent 40%), radial-gradient(circle at 50% 95%, rgba(236,72,153,.12), transparent 45%)",
+        background: "radial-gradient(circle at 12% 15%, rgba(37,99,235,.14), transparent 42%), radial-gradient(circle at 88% 12%, rgba(6,182,212,.14), transparent 40%), radial-gradient(circle at 50% 95%, rgba(212,160,23,.12), transparent 45%)",
       }} />
       <div style={{
         position: "absolute", inset: -50,
-        backgroundImage: "linear-gradient(rgba(124,58,237,.05) 1px, transparent 1px), linear-gradient(90deg, rgba(124,58,237,.05) 1px, transparent 1px)",
+        backgroundImage: "linear-gradient(rgba(37,99,235,.05) 1px, transparent 1px), linear-gradient(90deg, rgba(37,99,235,.05) 1px, transparent 1px)",
         backgroundSize: "46px 46px", animation: "grid-drift 22s linear infinite",
       }} />
+      <MatrixRain columns={variant === "home" ? 18 : 12} />
       <Particles count={variant === "home" ? 22 : 10} />
       <BackgroundArt variant={variant} />
     </div>
@@ -238,11 +308,12 @@ function FixedBackdrop({ variant }) {
 //  GLOW BUTTON — light-theme gradient/ghost button with hover lift
 // ══════════════════════════════════════════════════════════
 const VARIANT = {
-  primary: { bg: "linear-gradient(135deg,#7c3aed,#ec4899)", fg: "#fff", glow: "124,58,237" },
+  primary: { bg: "linear-gradient(135deg,#2563eb,#eab308)", fg: "#fff", glow: "37,99,235" },
   cyan: { bg: "linear-gradient(135deg,#06b6d4,#3b82f6)", fg: "#fff", glow: "6,182,212" },
-  ghost: { bg: "#ffffff", fg: C.ink, glow: "124,58,237", border: C.line },
+  ghost: { bg: "#ffffff", fg: C.ink, glow: "37,99,235", border: C.line },
   danger: { bg: "linear-gradient(135deg,#ef4444,#f97316)", fg: "#fff", glow: "239,68,68" },
   dangerGhost: { bg: "#fff", fg: C.bad, glow: "239,68,68", border: "rgba(239,68,68,.4)" },
+  teach: { bg: "#fff", fg: C.magenta, glow: "212,160,23", border: "rgba(212,160,23,.4)" },
 };
 function GButton({ variant = "ghost", onClick, disabled, children, style, ...rest }) {
   const [hover, setHover] = useState(false);
@@ -272,7 +343,7 @@ function CodeBlock({ code }) {
   return (
     <pre style={{
       fontFamily: MONO, fontSize: 12.5, color: "#5ef2c0", background: C.dark,
-      border: "1px solid rgba(139,92,246,.35)", borderRadius: 10, padding: "10px 14px",
+      border: "1px solid rgba(37,99,235,.35)", borderRadius: 10, padding: "10px 14px",
       overflowX: "auto", whiteSpace: "pre", margin: 0, lineHeight: 1.5,
       boxShadow: "0 8px 22px -12px rgba(20,10,50,.5)",
     }}>{code}</pre>
@@ -539,7 +610,7 @@ function TermLink({ acr }) {
   const content = { head: t.acronym + " — " + t.full, body: t.description, mod: "M" + t.module };
   const pinned = tt.pinnedKey === key;
   return (
-    <span style={{ ...termLinkStyle, background: pinned ? "rgba(124,58,237,.16)" : "transparent", borderRadius: 3 }} {...tt.triggerProps(key, content)}>{acr}</span>
+    <span style={{ ...termLinkStyle, background: pinned ? "rgba(37,99,235,.16)" : "transparent", borderRadius: 3 }} {...tt.triggerProps(key, content)}>{acr}</span>
   );
 }
 
@@ -553,7 +624,7 @@ function TooltipHost() {
       style={{
         position: "fixed", left: tt.pos.left, top: tt.pos.top, maxWidth: 340,
         background: "linear-gradient(160deg,#1c1533,#0d0b1a)", color: "#f0eaff", padding: "12px 14px", borderRadius: 12,
-        fontSize: 12.5, fontFamily: BODY, lineHeight: 1.5, boxShadow: "0 20px 50px -14px rgba(76,29,149,.55), 0 0 0 1px rgba(139,92,246,.4)",
+        fontSize: 12.5, fontFamily: BODY, lineHeight: 1.5, boxShadow: "0 20px 50px -14px rgba(76,29,149,.55), 0 0 0 1px rgba(37,99,235,.4)",
         zIndex: 1000, pointerEvents: tt.pinnedKey ? "auto" : "none",
       }}
     >
@@ -576,8 +647,8 @@ function TermChip({ t }) {
       {...tt.triggerProps(key, content)}
       style={{
         display: "flex", flexDirection: "column", gap: 2, padding: "9px 12px", borderRadius: 10, cursor: "help",
-        background: pinned ? "rgba(124,58,237,.10)" : "#fff", border: "1.5px solid " + (pinned ? C.violet : C.line), minWidth: 150,
-        boxShadow: pinned ? "0 6px 18px -8px rgba(124,58,237,.5)" : "0 2px 8px -5px rgba(76,29,149,.2)",
+        background: pinned ? "rgba(37,99,235,.10)" : "#fff", border: "1.5px solid " + (pinned ? C.violet : C.line), minWidth: 150,
+        boxShadow: pinned ? "0 6px 18px -8px rgba(37,99,235,.5)" : "0 2px 8px -5px rgba(76,29,149,.2)",
         transition: "all .15s",
       }}
     >
@@ -625,10 +696,269 @@ function saveProgress(state) {
 }
 
 // ══════════════════════════════════════════════════════════
+//  TEACHING DIAGRAMS — reusable SVG primitives for the "Teach me"
+//  slideshow. Slide content picks a type + params; these render it
+//  consistently in the site's own palette (no exhibit-image reuse).
+// ══════════════════════════════════════════════════════════
+const DIA_COLORS = { violet: C.violet, cyan: C.cyan, magenta: C.magenta, amber: C.amber, ok: C.ok, bad: C.bad };
+const diaColor = (name) => DIA_COLORS[name] || C.violet;
+function hexToRgb(hex) {
+  const h = (hex || "#2563eb").replace("#", "");
+  const full = h.length === 3 ? h.split("").map((c) => c + c).join("") : h;
+  const n = parseInt(full, 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+}
+function mixHex(a, b, t) {
+  const [ar, ag, ab] = hexToRgb(a), [br, bg, bb] = hexToRgb(b);
+  const r = Math.round(ar + (br - ar) * t), g = Math.round(ag + (bg - ag) * t), bl = Math.round(ab + (bb - ab) * t);
+  return `rgb(${r},${g},${bl})`;
+}
+
+function DiaFlowChain({ nodes = [], loopBackTo = null, color = "violet" }) {
+  const col = diaColor(color);
+  return (
+    <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 4, justifyContent: "center", padding: "8px 4px" }}>
+      {nodes.map((n, i) => (
+        <div key={i} style={{ display: "flex", alignItems: "center", gap: 4 }}>
+          <div style={{ minWidth: 92, textAlign: "center", padding: "10px 12px", borderRadius: 12, background: "#fff", border: "1.5px solid " + col, boxShadow: `0 6px 18px -10px ${col}88` }}>
+            <div style={{ fontFamily: HEAD, fontWeight: 700, fontSize: 13.5, color: C.ink }}>{n.label}</div>
+            {n.sub && <div style={{ fontFamily: BODY, fontSize: 10.5, color: C.dim, marginTop: 2 }}>{n.sub}</div>}
+          </div>
+          {i < nodes.length - 1 && <div style={{ fontSize: 18, color: col, fontWeight: 700 }}>→</div>}
+        </div>
+      ))}
+      {loopBackTo != null && nodes[loopBackTo] && (
+        <div style={{ width: "100%", textAlign: "center", fontFamily: MONO, fontSize: 11, color: C.dim, marginTop: 4 }}>↩ loops back to "{nodes[loopBackTo].label}"</div>
+      )}
+    </div>
+  );
+}
+
+function DiaLayerStack({ layers = [], colorFrom = "violet", colorTo = "cyan" }) {
+  const c1 = DIA_COLORS[colorFrom] || C.violet, c2 = DIA_COLORS[colorTo] || C.cyan;
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 6, padding: "4px 4px" }}>
+      {layers.map((l, i) => {
+        const t = layers.length > 1 ? i / (layers.length - 1) : 0;
+        return (
+          <div key={i} style={{ padding: "12px 16px", borderRadius: 12, color: "#fff", background: `linear-gradient(135deg, ${mixHex(c1, c2, t)}, ${mixHex(c1, c2, Math.min(1, t + .25))})`, boxShadow: "0 8px 20px -12px rgba(76,29,149,.4)" }}>
+            <div style={{ fontFamily: HEAD, fontWeight: 700, fontSize: 14 }}>{l.label}</div>
+            {l.sub && <div style={{ fontFamily: BODY, fontSize: 11.5, opacity: .92, marginTop: 2 }}>{l.sub}</div>}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+const DIA_KIND_GLYPH = { router: "R", switch: "SW", pc: "PC", server: "SRV", cloud: "☁", firewall: "FW", ap: "AP" };
+const DIA_KIND_COLOR = { router: C.violet, switch: C.cyan, pc: C.ok, server: C.magenta, cloud: C.dim, firewall: C.bad, ap: C.amber };
+function DiaTopology({ nodes = [], links = [] }) {
+  const n = nodes.length;
+  const W = 480, cols = Math.min(n, 4) || 1, rows = Math.ceil(n / cols) || 1;
+  let H = Math.max(140, rows * 90);
+  const pos = {};
+  nodes.forEach((node, i) => {
+    if (node.x != null && node.y != null) { pos[node.id] = { x: node.x, y: node.y }; H = Math.max(H, node.y + 40); return; }
+    const col = i % cols, row = Math.floor(i / cols);
+    pos[node.id] = { x: (W / (cols + 1)) * (col + 1), y: (H / (rows + 1)) * (row + 1) };
+  });
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", height: H, display: "block" }}>
+      {links.map((l, i) => {
+        const a = pos[l.from], b = pos[l.to];
+        if (!a || !b) return null;
+        return (
+          <g key={i}>
+            <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke={C.line} strokeWidth="2" strokeDasharray={l.style === "dashed" ? "5 5" : "none"} />
+            {l.label && <text x={(a.x + b.x) / 2} y={(a.y + b.y) / 2 - 6} fill={C.dim} fontSize="10" fontFamily={MONO} textAnchor="middle">{l.label}</text>}
+          </g>
+        );
+      })}
+      {nodes.map((node) => {
+        const p = pos[node.id]; if (!p) return null;
+        const col = DIA_KIND_COLOR[node.kind] || C.violet;
+        return (
+          <g key={node.id}>
+            <rect x={p.x - 32} y={p.y - 20} width="64" height="40" rx="10" fill="#fff" stroke={col} strokeWidth="1.6" />
+            <text x={p.x} y={p.y - 3} fill={col} fontSize="12" fontFamily={HEAD} fontWeight="700" textAnchor="middle">{DIA_KIND_GLYPH[node.kind] || "?"}</text>
+            <text x={p.x} y={p.y + 13} fill={C.ink} fontSize="10" fontFamily={BODY} textAnchor="middle">{node.label}</text>
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+function DiaLadder({ steps = [], highlight = null }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 6, padding: "4px 8px" }}>
+      {steps.map((s, i) => (
+        <div key={i} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ width: 30, height: 30, borderRadius: "50%", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: MONO, fontWeight: 700, fontSize: 12.5, background: s.n === highlight ? "linear-gradient(135deg,#2563eb,#eab308)" : "#fff", color: s.n === highlight ? "#fff" : C.violet, border: "1.5px solid " + C.violet }}>{s.n}</div>
+          <div style={{ fontFamily: BODY, fontSize: 13, color: C.ink, fontWeight: s.n === highlight ? 700 : 400 }}>{s.label}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function DiaRingLayers({ rings = [] }) {
+  const n = rings.length || 1, size = 220;
+  const hues = [C.violet, C.cyan, C.magenta, C.amber, C.ok];
+  return (
+    <div style={{ display: "flex", gap: 20, alignItems: "center", flexWrap: "wrap", justifyContent: "center" }}>
+      <svg viewBox={`0 0 ${size} ${size}`} width={200} height={200}>
+        {rings.map((r, i) => <circle key={i} cx={size / 2} cy={size / 2} r={(size / 2 - 8) * (1 - i / n)} fill="none" stroke={hues[i % hues.length]} strokeWidth="2" />)}
+      </svg>
+      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        {rings.map((r, i) => (
+          <div key={i} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ width: 10, height: 10, borderRadius: "50%", background: hues[i % hues.length], flexShrink: 0 }} />
+            <span style={{ fontFamily: BODY, fontSize: 13, color: C.ink }}>{r.label}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function DiaBitMask({ groups = [], caption }) {
+  return (
+    <div>
+      <div style={{ display: "flex", gap: 14, flexWrap: "wrap", justifyContent: "center" }}>
+        {groups.map((g, gi) => (
+          <div key={gi} style={{ textAlign: "center" }}>
+            <div style={{ display: "flex", gap: 2 }}>
+              {g.bits.map((b, bi) => (
+                <div key={bi} style={{ width: 18, height: 18, borderRadius: 4, fontSize: 9, fontFamily: MONO, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", background: b ? "rgba(212,160,23,.15)" : "rgba(16,185,129,.15)", color: b ? C.magenta : C.ok, border: "1px solid " + (b ? C.magenta : C.ok) }}>{b}</div>
+              ))}
+            </div>
+            <div style={{ fontFamily: MONO, fontSize: 11, color: C.dim, marginTop: 3 }}>{g.octet}</div>
+          </div>
+        ))}
+      </div>
+      {caption && <div style={{ textAlign: "center", fontFamily: BODY, fontSize: 12, color: C.dim, marginTop: 8 }}>{caption}</div>}
+    </div>
+  );
+}
+
+function DiaCompareGrid({ cols = [], rows = [] }) {
+  const cellStyle = { background: "#fff", border: "1px solid " + C.line, borderRadius: 8, padding: "8px 10px", fontSize: 12.5, fontFamily: BODY, color: C.ink, textAlign: "center" };
+  return (
+    <div style={{ overflowX: "auto" }}>
+      <div style={{ display: "grid", gridTemplateColumns: `120px repeat(${cols.length}, 1fr)`, gap: 6, minWidth: 120 + cols.length * 140 }}>
+        <div />
+        {cols.map((c, i) => <div key={"h" + i} style={{ fontFamily: HEAD, fontWeight: 700, fontSize: 13, color: C.violet, textAlign: "center", padding: "6px 4px" }}>{c.header}</div>)}
+        {rows.flatMap((r, ri) => [
+          <div key={"lbl" + ri} style={{ fontFamily: HEAD, fontWeight: 600, fontSize: 12.5, color: C.dim, display: "flex", alignItems: "center" }}>{r.label}</div>,
+          ...r.cells.map((cell, ci) => <div key={ri + "-" + ci} style={cellStyle}>{cell}</div>),
+        ])}
+      </div>
+    </div>
+  );
+}
+
+function DiaCompareBars({ items = [] }) {
+  return (
+    <div style={{ display: "flex", gap: 16, flexWrap: "wrap", justifyContent: "center" }}>
+      {items.map((it, i) => {
+        const col = diaColor(it.color || "violet");
+        const path = it.shape === "sawtooth"
+          ? "M0,40 L20,10 L20,40 L40,10 L40,40 L60,10 L60,40 L80,10 L80,40 L100,10 L100,40"
+          : "M0,40 C20,10 40,10 60,25 C80,35 90,15 100,10";
+        return (
+          <div key={i} style={{ textAlign: "center" }}>
+            <svg viewBox="0 0 100 46" width={150} height={70}>
+              <line x1="0" y1="40" x2="100" y2="40" stroke={C.line} strokeWidth="1" />
+              <path d={path} fill="none" stroke={col} strokeWidth="2.4" strokeLinejoin="round" />
+            </svg>
+            <div style={{ fontFamily: HEAD, fontWeight: 700, fontSize: 12.5, color: C.ink, marginTop: 2 }}>{it.label}</div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+const DIAGRAM_TYPES = { FlowChain: DiaFlowChain, LayerStack: DiaLayerStack, TopologyDiagram: DiaTopology, Ladder: DiaLadder, RingLayers: DiaRingLayers, BitMask: DiaBitMask, CompareGrid: DiaCompareGrid, CompareBars: DiaCompareBars };
+function TeachDiagram({ diagram }) {
+  if (!diagram || !diagram.type) return null;
+  const { type, ...props } = diagram;
+  const Comp = DIAGRAM_TYPES[type];
+  if (!Comp) return null;
+  return (
+    <div style={{ background: C.well, border: "1px solid " + C.line, borderRadius: 14, padding: 18, marginTop: 4 }}>
+      <Comp {...props} />
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════
+//  BOOT SEQUENCE — plays once per page load/refresh, then irises
+//  out to reveal the app.
+// ══════════════════════════════════════════════════════════
+const BOOT_LINES = [
+  "INIT ENSA_ADAPTIVE_TRAINER v7.0",
+  "LOADING 212 QUESTIONS · 14 MODULES",
+  "CALIBRATING SPACED-REPETITION ENGINE",
+  "ESTABLISHING TUTOR UPLINK",
+  "READY",
+];
+function BootSequence({ onDone }) {
+  const [dismissing, setDismissing] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setDismissing(true), 3800);
+    return () => clearTimeout(t);
+  }, []);
+  useEffect(() => {
+    if (!dismissing) return;
+    const t = setTimeout(onDone, 720);
+    return () => clearTimeout(t);
+  }, [dismissing]);
+
+  return (
+    <div style={{
+      position: "fixed", inset: 0, zIndex: 9999, background: "#05070f",
+      display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column",
+      overflow: "hidden", pointerEvents: dismissing ? "none" : "auto",
+      animation: dismissing ? "boot-wipe .7s cubic-bezier(.7,0,.3,1) forwards" : "none",
+    }}>
+      <div style={{ position: "absolute", animation: "boot-globe-in 1.2s cubic-bezier(.2,.8,.2,1) both, spin-slow 40s linear infinite" }}>
+        <WireGlobe size={440} color="#5b8def" />
+      </div>
+      <div style={{ position: "absolute", left: 0, right: 0, height: "35%", background: "linear-gradient(180deg, transparent, rgba(37,99,235,.28), transparent)", animation: "boot-scan 2.1s ease-in-out 1" }} />
+
+      <div style={{ position: "relative", textAlign: "center", padding: "0 20px" }}>
+        <div style={{ fontFamily: DISPLAY, fontWeight: 900, fontSize: "clamp(34px,7vw,54px)", letterSpacing: 3, ...gradText, opacity: 0, animation: "boot-fade-up .8s ease .6s forwards" }}>ENSA</div>
+        <div style={{ fontFamily: HEAD, fontWeight: 600, fontSize: 12.5, letterSpacing: 4, color: "#8ba3d6", marginTop: 6, opacity: 0, animation: "boot-fade-up .8s ease .9s forwards" }}>ENTERPRISE NETWORKING · SECURITY · AUTOMATION</div>
+
+        <div style={{ marginTop: 30, fontFamily: MONO, fontSize: 11.5, color: "#5ef2c0", textAlign: "left", display: "inline-block", opacity: 0, animation: "boot-fade-up .3s ease 1.3s forwards" }}>
+          {BOOT_LINES.map((l, i) => (
+            <div key={i} style={{ opacity: 0, marginBottom: 3, animation: `boot-line-in .4s ease ${1.5 + i * 0.35}s forwards` }}>› {l}</div>
+          ))}
+        </div>
+
+        <div style={{ marginTop: 22, width: "min(70vw, 280px)", height: 3, background: "rgba(255,255,255,.1)", borderRadius: 999, overflow: "hidden", marginInline: "auto" }}>
+          <div style={{ height: "100%", background: "linear-gradient(90deg,#2563eb,#06b6d4,#eab308)", backgroundSize: "200% 100%", animation: "gradient-flow 2s ease infinite, boot-progress 3.4s cubic-bezier(.2,.8,.2,1) forwards" }} />
+        </div>
+      </div>
+
+      <button onClick={() => setDismissing(true)} style={{
+        position: "absolute", bottom: 26, right: 26, background: "transparent", border: "1px solid rgba(255,255,255,.28)",
+        color: "rgba(255,255,255,.65)", padding: "7px 16px", borderRadius: 999, fontFamily: HEAD, fontWeight: 600,
+        fontSize: 12.5, cursor: "pointer", letterSpacing: .5,
+      }}>Skip →</button>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════
 //  ENGINE + APP
 // ══════════════════════════════════════════════════════════
 export default function ENSATrainer() {
   useGlobalStyle();
+  const [showBoot, setShowBoot] = useState(true);
   const tt = useTooltip();
   const [view, setView] = useState("home");
   const [scope, setScope] = useState("all");
@@ -646,8 +976,25 @@ export default function ENSATrainer() {
   const [deepErr, setDeepErr] = useState(false);
   const [ask, setAsk] = useState("");
   const [convo, setConvo] = useState([]);
+  const [teachMi, setTeachMi] = useState(null);
+  const [slideIdx, setSlideIdx] = useState(0);
+  const [slideDir, setSlideDir] = useState(1);
 
   useEffect(() => { saveProgress({ prog, answered, correct }); }, [prog, answered, correct]);
+
+  const openTeach = (mi) => { setTeachMi(mi); setSlideIdx(0); setSlideDir(1); };
+
+  useEffect(() => {
+    if (teachMi == null) return;
+    const total = (SLIDES[teachMi] || []).length;
+    const onKey = (e) => {
+      if (e.key === "ArrowRight") setSlideIdx((i) => Math.min(total - 1, i + 1));
+      if (e.key === "ArrowLeft") setSlideIdx((i) => Math.max(0, i - 1));
+      if (e.key === "Escape") setTeachMi(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [teachMi]);
 
   const getP = (k) => prog[k] || { box: 0, wrong: 0, seen: 0 };
   const poolFor = (sc) => sc === "all" ? ALL : sc === "weak" ? ALL.filter(q => { const p = getP(q.key); return p.wrong > 0 && p.box < 3; }) : ALL.filter(q => q.mi === sc);
@@ -767,6 +1114,66 @@ export default function ENSATrainer() {
   };
   const secLabel = (col) => ({ fontFamily: HEAD, fontWeight: 700, fontSize: 13, letterSpacing: 1.8, textTransform: "uppercase", color: col, marginBottom: 10 });
 
+  if (showBoot) {
+    return <BootSequence onDone={() => setShowBoot(false)} />;
+  }
+
+  if (teachMi != null) {
+    const m = DATA[teachMi];
+    const slides = SLIDES[teachMi] || [];
+    const slide = slides[slideIdx] || { title: "Coming soon", body: "This module's teaching slides aren't ready yet — check back soon, or jump straight into drilling.", keyPoints: [] };
+    const goSlide = (i) => { setSlideDir(i > slideIdx ? 1 : -1); setSlideIdx(Math.max(0, Math.min(Math.max(slides.length - 1, 0), i))); };
+    return (
+      <div style={page}>
+        <FixedBackdrop variant="study" />
+        <div style={wrap}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14, flexWrap: "wrap" }}>
+            <GButton variant="ghost" onClick={() => setTeachMi(null)}>✕ Close</GButton>
+            <div style={{ fontFamily: MONO, fontSize: 12, color: C.violet }}>MOD {m.num}</div>
+            <div style={{ fontWeight: 800, fontFamily: HEAD, fontSize: 18 }}>{m.title} — Teach Me</div>
+            <div style={{ marginLeft: "auto", fontFamily: MONO, fontSize: 12, color: C.dim }}>{slides.length ? slideIdx + 1 : 0} / {slides.length}</div>
+          </div>
+
+          {slides.length > 0 && (
+            <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>
+              {slides.map((_, i) => (
+                <button key={i} onClick={() => goSlide(i)} style={{ flex: 1, height: 5, borderRadius: 999, border: "none", cursor: "pointer", padding: 0, background: i <= slideIdx ? "linear-gradient(90deg,#2563eb,#eab308)" : C.well }} />
+              ))}
+            </div>
+          )}
+
+          <div key={slideIdx} style={{ ...panel, animation: `slide-in-${slideDir > 0 ? "r" : "l"} .4s cubic-bezier(.2,.8,.2,1)`, minHeight: 340 }}>
+            <div style={{ fontFamily: HEAD, fontWeight: 700, fontSize: 12, letterSpacing: 1.5, textTransform: "uppercase", color: C.amber, marginBottom: 6 }}>
+              {slide.kind === "intro" ? "Welcome" : slide.kind === "recap" ? "Recap" : "Concept " + slideIdx}
+            </div>
+            <h2 style={{ fontFamily: DISPLAY, fontWeight: 800, fontSize: 25, margin: "0 0 12px", ...gradText, display: "inline-block" }}>{slide.title}</h2>
+            <p style={{ fontSize: 15, lineHeight: 1.7, color: C.ink, marginBottom: (slide.diagram || (slide.keyPoints && slide.keyPoints.length)) ? 16 : 0 }}>{slide.body}</p>
+            {slide.diagram && <TeachDiagram diagram={slide.diagram} />}
+            {slide.keyPoints && slide.keyPoints.length > 0 && (
+              <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 8 }}>
+                {slide.keyPoints.map((k, i) => (
+                  <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+                    <span style={{ color: C.ok, fontSize: 14, flexShrink: 0 }}>✓</span>
+                    <span style={{ fontSize: 13.5, color: "#3a3550", lineHeight: 1.5 }}>{k}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div style={{ display: "flex", justifyContent: "space-between", marginTop: 16, gap: 10 }}>
+            <GButton variant="ghost" onClick={() => goSlide(slideIdx - 1)} disabled={slideIdx === 0}>← Back</GButton>
+            {slideIdx < slides.length - 1 ? (
+              <GButton variant="primary" onClick={() => goSlide(slideIdx + 1)}>Next →</GButton>
+            ) : (
+              <GButton variant="primary" onClick={() => { setTeachMi(null); startDrill(teachMi); }}>Drill this module →</GButton>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (view === "home") {
     return (
       <div style={page}>
@@ -780,7 +1187,7 @@ export default function ENSATrainer() {
         <p style={{ color: C.dim, fontSize: 14.5, marginTop: 4, lineHeight: 1.6, maxWidth: 620 }}>Real exam-bank questions with real Cisco IOS commands and exhibits, organized into the 14 official ENSA modules. Some questions are drag-to-match. Ask the tutor anything after you answer.</p>
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap", margin: "16px 0 22px", alignItems: "center" }}>
           <div style={{ position: "relative", display: "inline-block" }}>
-            <div style={{ position: "absolute", inset: -6, borderRadius: 999, background: "linear-gradient(135deg,#7c3aed,#ec4899)", filter: "blur(16px)", opacity: .55, animation: "pulse-op 2.2s ease-in-out infinite", zIndex: 0 }} />
+            <div style={{ position: "absolute", inset: -6, borderRadius: 999, background: "linear-gradient(135deg,#2563eb,#eab308)", filter: "blur(16px)", opacity: .55, animation: "pulse-op 2.2s ease-in-out infinite", zIndex: 0 }} />
             <div style={{ position: "relative", zIndex: 1 }}><GButton variant="primary" onClick={() => startDrill("all")}>⚡ Drill everything</GButton></div>
           </div>
           <GButton variant={weakCount ? "dangerGhost" : "ghost"} onClick={() => { if (weakCount) startDrill("weak"); }} disabled={!weakCount}>Weak spots ({weakCount})</GButton>
@@ -794,9 +1201,10 @@ export default function ENSATrainer() {
               <div style={{ fontFamily: DISPLAY, fontWeight: 900, fontSize: 12, color: C.violet, minWidth: 74 }}>MOD {String(m.num).padStart(2, "0")}</div>
               <div style={{ fontWeight: 700, fontFamily: HEAD, fontSize: 16, flex: 1, minWidth: 200 }}>{m.title} <span style={{ color: C.dim, fontWeight: 500, fontSize: 12.5, fontFamily: BODY }}>· {m.questions.length} q</span></div>
               <div style={{ width: 110, height: 8, background: C.well, borderRadius: 999, overflow: "hidden" }}>
-                <div style={{ width: pct + "%", height: "100%", borderRadius: 999, background: pct === 100 ? "linear-gradient(90deg,#10b981,#06b6d4)" : "linear-gradient(90deg,#7c3aed,#ec4899,#06b6d4)", backgroundSize: "200% 100%", animation: pct > 0 ? "gradient-flow 3s ease infinite" : "none", transition: "width .4s cubic-bezier(.2,.8,.2,1)" }} />
+                <div style={{ width: pct + "%", height: "100%", borderRadius: 999, background: pct === 100 ? "linear-gradient(90deg,#10b981,#06b6d4)" : "linear-gradient(90deg,#2563eb,#eab308,#06b6d4)", backgroundSize: "200% 100%", animation: pct > 0 ? "gradient-flow 3s ease infinite" : "none", transition: "width .4s cubic-bezier(.2,.8,.2,1)" }} />
               </div>
               <div style={{ fontFamily: MONO, fontSize: 11, color: pct === 100 ? C.ok : C.dim, width: 36 }}>{pct}%</div>
+              <GButton variant="teach" onClick={() => openTeach(mi)}>🎬 Teach me</GButton>
               <GButton variant="cyan" onClick={() => { setStudyMi(mi); resetTutor(); setView("study"); }}>Study</GButton>
               <GButton variant="primary" onClick={() => startDrill(mi)}>Drill</GButton>
             </div>
@@ -820,7 +1228,10 @@ export default function ENSATrainer() {
           <GButton variant="ghost" onClick={() => setView("home")}>← Modules</GButton>
           <div style={{ fontFamily: MONO, fontSize: 12, color: C.violet }}>MOD {m.num}</div>
           <div style={{ fontWeight: 800, fontFamily: HEAD, fontSize: 22 }}>{m.title}</div>
-          <div style={{ marginLeft: "auto" }}><GButton variant="primary" onClick={() => startDrill(studyMi)}>Drill this module →</GButton></div>
+          <div style={{ marginLeft: "auto", display: "flex", gap: 10 }}>
+            <GButton variant="teach" onClick={() => openTeach(studyMi)}>🎬 Teach me</GButton>
+            <GButton variant="primary" onClick={() => startDrill(studyMi)}>Drill this module →</GButton>
+          </div>
         </div>
 
         <div style={panel}>
@@ -940,7 +1351,7 @@ export default function ENSATrainer() {
             </div>
 
             {convo.length > 0 && (
-              <div style={{ background: "linear-gradient(160deg,#1c1533,#0d0b1a)", border: "1px solid rgba(139,92,246,.4)", borderRadius: 14, padding: 16, marginBottom: 12, boxShadow: "0 14px 34px -18px rgba(76,29,149,.5)" }}>
+              <div style={{ background: "linear-gradient(160deg,#1c1533,#0d0b1a)", border: "1px solid rgba(37,99,235,.4)", borderRadius: 14, padding: 16, marginBottom: 12, boxShadow: "0 14px 34px -18px rgba(76,29,149,.5)" }}>
                 {convo.map((mm, i) => (
                   <div key={i} style={{ marginBottom: i < convo.length - 1 ? 12 : 0 }}>
                     <div style={{ fontFamily: MONO, fontSize: 10.5, color: mm.role === "tutor" ? "#5ef2c0" : C.amber, marginBottom: 4, fontWeight: 700, letterSpacing: .5 }}>{mm.role === "tutor" ? "TUTOR" : "YOU"}</div>

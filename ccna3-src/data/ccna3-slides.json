@@ -1,0 +1,141 @@
+[
+  [
+    {
+      "kind": "intro",
+      "title": "Why OSPF Matters",
+      "body": "OSPF is the routing protocol most enterprise networks run internally. Every question in this module is really asking one thing: does a router have a complete, identical picture of the network before it calculates paths? Get that mental model right and the rest — states, elections, timers — falls into place.",
+      "keyPoints": [
+        "OSPF is classless and link-state — every router builds a full topology map, not just a list of routes.",
+        "It's the most heavily tested routing protocol in the ENSA exam."
+      ]
+    },
+    {
+      "kind": "concept",
+      "title": "The Link-State Big Picture",
+      "body": "Forget the acronyms for a second. Every link-state protocol follows the same five-step recipe. OSPF just gives each step a name and a packet type.",
+      "diagram": {
+        "type": "FlowChain",
+        "color": "violet",
+        "nodes": [
+          { "label": "Discover", "sub": "Hello packets" },
+          { "label": "Exchange", "sub": "flood LSAs" },
+          { "label": "Build LSDB", "sub": "identical per area" },
+          { "label": "Run SPF", "sub": "Dijkstra algorithm" },
+          { "label": "Install routes", "sub": "into IP routing table" }
+        ]
+      },
+      "keyPoints": [
+        "The link-state database (LSDB) ends up identical on every router in an area — only the resulting routing table differs per router.",
+        "SPF (Dijkstra) runs locally on each router against its own copy of that shared database."
+      ]
+    },
+    {
+      "kind": "concept",
+      "title": "Neighbor States — the Handshake",
+      "body": "Two OSPF routers don't become full neighbors instantly. They climb a ladder of states, and exam questions love to ask which state a symptom points to.",
+      "diagram": {
+        "type": "FlowChain",
+        "color": "cyan",
+        "nodes": [
+          { "label": "Down", "sub": "no Hello seen" },
+          { "label": "Init", "sub": "Hello seen, one-way" },
+          { "label": "Two-Way", "sub": "DR/BDR elected here" },
+          { "label": "ExStart", "sub": "master/slave chosen" },
+          { "label": "Exchange", "sub": "DBD packets sent" },
+          { "label": "Loading", "sub": "LSR/LSU for missing LSAs" },
+          { "label": "Full", "sub": "databases synchronized" }
+        ]
+      },
+      "keyPoints": [
+        "DR/BDR election happens during Two-Way — not before, not after.",
+        "In ExStart, the router with the higher Router ID becomes master and sends the first DBD.",
+        "Only DR and BDR reach Full with every neighbor; two DROTHERs only reach Two-Way with each other."
+      ]
+    },
+    {
+      "kind": "concept",
+      "title": "DR/BDR Election on a Multiaccess Segment",
+      "body": "On a shared segment (like a switch), every router doesn't need to peer with every other router — that would be n(n-1)/2 adjacencies. Instead, one Designated Router and one Backup Designated Router become the hub everyone else talks to.",
+      "diagram": {
+        "type": "TopologyDiagram",
+        "nodes": [
+          { "id": "sw", "label": "Switch", "kind": "switch", "x": 240, "y": 95 },
+          { "id": "a", "label": "RTA (DR)", "kind": "router", "x": 90, "y": 30 },
+          { "id": "b", "label": "RTB (BDR)", "kind": "router", "x": 390, "y": 30 },
+          { "id": "c", "label": "RTC (DROTHER)", "kind": "router", "x": 90, "y": 160 },
+          { "id": "d", "label": "RTD (DROTHER)", "kind": "router", "x": 390, "y": 160 }
+        ],
+        "links": [
+          { "from": "sw", "to": "a", "label": "Full" },
+          { "from": "sw", "to": "b", "label": "Full" },
+          { "from": "sw", "to": "c", "label": "Full" },
+          { "from": "sw", "to": "d", "label": "Full" }
+        ]
+      },
+      "keyPoints": [
+        "Election tiebreak order: highest OSPF interface priority (0–255, 0 = never eligible), then highest Router ID.",
+        "DROTHERs send updates to the DR/BDR via multicast 224.0.0.6; the DR/BDR floods to everyone via 224.0.0.5.",
+        "Point-to-point links never elect a DR/BDR — only two routers can ever exist on that segment."
+      ]
+    },
+    {
+      "kind": "concept",
+      "title": "Router ID Selection Order",
+      "body": "Before any of this can happen, every router needs a unique 32-bit Router ID. OSPF picks it in a strict order — and exam questions test exactly this order.",
+      "diagram": {
+        "type": "Ladder",
+        "highlight": 1,
+        "steps": [
+          { "n": 1, "label": "Manually configured router-id" },
+          { "n": 2, "label": "Highest IP on any loopback interface" },
+          { "n": 3, "label": "Highest IP on any active physical interface" }
+        ]
+      },
+      "keyPoints": [
+        "A manually set router-id always wins, even over a higher loopback address.",
+        "Loopback interfaces are preferred over physical ones because they never go down — a stable Router ID means a stable OSPF process."
+      ]
+    },
+    {
+      "kind": "concept",
+      "title": "The Five OSPF Packet Types",
+      "body": "Every OSPF conversation is built from five packet types. Knowing which one does what turns a wall of acronyms into a simple story: say hello, describe what you have, ask for what's missing, send it, confirm you got it.",
+      "diagram": {
+        "type": "CompareGrid",
+        "cols": [{ "header": "Type" }, { "header": "Purpose" }],
+        "rows": [
+          { "label": "Hello (1)", "cells": ["Type", "Discover & maintain neighbors"] },
+          { "label": "DBD (2)", "cells": ["Type", "Summarize the LSDB contents"] },
+          { "label": "LSR (3)", "cells": ["Type", "Request specific missing LSAs"] },
+          { "label": "LSU (4)", "cells": ["Type", "Flood the actual LSAs"] },
+          { "label": "LSAck (5)", "cells": ["Type", "Confirm reliable receipt"] }
+        ]
+      },
+      "keyPoints": [
+        "Hello packets are sent every 10 seconds by default on broadcast/point-to-point links; the Dead interval is always 4x Hello.",
+        "LSU (Type 4) is what actually carries the LSAs — DBD (Type 2) is just a table of contents."
+      ]
+    },
+    {
+      "kind": "concept",
+      "title": "Watch Out For…",
+      "body": "The two traps that catch people who understand OSPF conceptually but rush the questions.",
+      "keyPoints": [
+        "\"Two-Way\" is not the final state — students often stop reading here. Full adjacency (databases synchronized) is what matters for routing.",
+        "A DROTHER-to-DROTHER relationship staying at Two-Way is normal, not a fault — they don't need each other's full database.",
+        "Default OSPF cost = reference bandwidth ÷ interface bandwidth. Gigabit and FastEthernet both hit the cost-1 floor unless you raise the reference bandwidth with auto-cost."
+      ]
+    },
+    {
+      "kind": "recap",
+      "title": "Ready to Drill",
+      "body": "You've got the shape of single-area OSPF: the link-state process, the neighbor state ladder, DR/BDR election, Router ID selection, and the five packet types. That's exactly what this module's questions test.",
+      "keyPoints": [
+        "OSPF's default administrative distance is 110.",
+        "The LSDB is identical per area; the neighbor table and routing table are unique per router.",
+        "An ASBR connects the OSPF domain to an external network and can inject a default route."
+      ]
+    }
+  ],
+  [], [], [], [], [], [], [], [], [], [], [], [], []
+]
