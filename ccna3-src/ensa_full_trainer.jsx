@@ -451,7 +451,10 @@ function MatchQuestion({ choices, rows, locked, onCheck }) {
   };
 
   const check = () => {
-    const results = slots.map((choiceIdx, rowIdx) => choiceIdx === rows[rowIdx].answer);
+    // Compare by label, not index: some questions carry duplicate chips
+    // (e.g. two "Not used", or one layer name matching two descriptions),
+    // and either copy must count as correct.
+    const results = slots.map((choiceIdx, rowIdx) => choices[choiceIdx] === choices[rows[rowIdx].answer]);
     setChecked(results);
     onCheck(results.every(Boolean));
   };
