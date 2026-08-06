@@ -65,7 +65,7 @@ const DEFAULT_ALIASES = {
   gl: "Get-Location", pwd: "Get-Location", cd: "Set-Location", sl: "Set-Location",
   kill: "Stop-Process", ps: "Get-Process", gps: "Get-Process",
   gsv: "Get-Service", gal: "Get-Alias", gv: "Get-Variable",
-  gcm: "Get-Command", ghelp: "Get-Help", man: "Get-Help",
+  gcm: "Get-Command", ghelp: "Get-Help", man: "Get-Help", help: "Get-Help",
   ni: "New-Item", ri: "Remove-Item", rm: "Remove-Item", del: "Remove-Item", erase: "Remove-Item",
   gh: "Get-History", history: "Get-History",
 };
@@ -363,13 +363,21 @@ function runStage(state, stageText, input) {
     case "get-process": {
       let items = state.processes;
       const nameArg = positional[0] || flags.name;
-      if (nameArg) { const re = wildcardToRegex(nameArg); items = items.filter((p) => re.test(p.ProcessName)); }
+      if (nameArg) {
+        const re = wildcardToRegex(nameArg);
+        items = items.filter((p) => re.test(p.ProcessName));
+        if (!items.length) return { value: null, text: `Get-Process : Cannot find a process with the name "${nameArg}". Verify the process name and call the cmdlet again.`, isError: true, state };
+      }
       return { value: objVal(items, "Process"), isError: false, state };
     }
     case "get-service": {
       let items = state.services;
       const nameArg = positional[0] || flags.name;
-      if (nameArg) { const re = wildcardToRegex(nameArg); items = items.filter((s) => re.test(s.Name)); }
+      if (nameArg) {
+        const re = wildcardToRegex(nameArg);
+        items = items.filter((s) => re.test(s.Name));
+        if (!items.length) return { value: null, text: `Get-Service : Cannot find any service with service name "${nameArg}".`, isError: true, state };
+      }
       return { value: objVal(items, "Service"), isError: false, state };
     }
     case "start-process": {
