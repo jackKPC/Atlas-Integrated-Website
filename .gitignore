@@ -25,3 +25,9 @@ ccna2.html
 ccna2-src/
 js/ccna2.bundle*.js
 scripts/build-ccna2.mjs
+
+# Raw CCTC lesson source material (emailed text/HTML exports) — working
+# material only, already baked into cctc-os-src/data/*.json
+dataforcctc.txt
+4,5,6.html
+8,9,10.html
