@@ -531,7 +531,10 @@ function fsCommand(state, canon, tokens, flags, positional) {
 
 // ── entry point ──
 export function runCommand(state, rawLine) {
-  const line = (rawLine || "").trim();
+  // Classic DOS/cmd.exe muscle memory — "cd.." / "cd..." / "cd." with no
+  // space — is valid shorthand real PowerShell/cmd.exe both accept. Our
+  // tokenizer splits purely on whitespace, so normalize it to "cd .." first.
+  const line = (rawLine || "").trim().replace(/^(cd|sl)(\.{1,})(\s|$)/i, "$1 $2$3");
   if (!line) return { state, lines: [] };
   const history = [...state.history, line].slice(-50);
   let s = { ...state, history };

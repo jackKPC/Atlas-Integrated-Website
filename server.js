@@ -3,12 +3,21 @@ const path = require("path");
 const { readFile } = require("fs/promises");
 const handler = require("serve-handler");
 
-const OPENROUTER_MODEL = "inclusionai/ling-3.0-flash:free";
-// Exhibit questions need a model that accepts image input; the default text
-// model above does not. Free vision endpoints come and go on OpenRouter, so
-// instead of pinning one ID we discover what's currently available from the
-// public catalog and fall through a ranked chain until a call succeeds.
-// OPENROUTER_VISION_MODEL still overrides everything when set.
+// Free OpenRouter models (text and vision alike) get deprecated, paywalled,
+// or renamed without notice — pinning a single ID means the tutor silently
+// dies the day that model rotates out (as happened to the old hardcoded
+// text model). So instead we discover what's currently free from the public
+// catalog and fall through a ranked chain until a call succeeds, with a
+// small hardcoded list as a last resort if discovery itself fails.
+// OPENROUTER_MODEL / OPENROUTER_VISION_MODEL still override everything when set.
+const TEXT_MODEL_FALLBACKS = [
+  "google/gemini-2.0-flash-exp:free",
+  "meta-llama/llama-3.3-70b-instruct:free",
+  "deepseek/deepseek-chat:free",
+  "qwen/qwen-2.5-72b-instruct:free",
+  "mistralai/mistral-7b-instruct:free",
+];
+const TEXT_PREFERENCE = ["gemini", "llama-3.3", "deepseek", "qwen", "mistral"];
 const VISION_MODEL_FALLBACKS = [
   "google/gemini-2.0-flash-exp:free",
   "qwen/qwen2.5-vl-72b-instruct:free",
@@ -17,35 +26,48 @@ const VISION_MODEL_FALLBACKS = [
   "meta-llama/llama-3.2-11b-vision-instruct:free",
 ];
 const VISION_PREFERENCE = ["gemini", "qwen", "gemma", "mistral-small", "llama"];
-const VISION_CHAIN_MAX = 4;
-const VISION_CACHE_MS = 6 * 60 * 60 * 1000;
+const CHAIN_MAX = 4;
+const MODEL_CACHE_MS = 6 * 60 * 60 * 1000;
 const MAX_BODY_BYTES = 32 * 1024;
 
+let textCache = { at: 0, models: [] };
 let visionCache = { at: 0, models: [] };
 
-async function getVisionModels() {
-  if (process.env.OPENROUTER_VISION_MODEL) return [process.env.OPENROUTER_VISION_MODEL];
-  if (visionCache.models.length && Date.now() - visionCache.at < VISION_CACHE_MS) return visionCache.models;
+async function discoverFreeModels({ requireImage, preference, fallbacks, envOverride }) {
+  if (envOverride) return [envOverride];
   try {
     const res = await fetch("https://openrouter.ai/api/v1/models");
     if (!res.ok) throw new Error(`models endpoint ${res.status}`);
     const data = await res.json();
     const free = (data.data || []).filter((m) =>
       typeof m.id === "string" && m.id.endsWith(":free") &&
-      (m.architecture?.input_modalities || []).includes("image"));
+      (!requireImage || (m.architecture?.input_modalities || []).includes("image")));
     const rank = (id) => {
-      const p = VISION_PREFERENCE.findIndex((s) => id.includes(s));
-      return p === -1 ? VISION_PREFERENCE.length : p;
+      const p = preference.findIndex((s) => id.includes(s));
+      return p === -1 ? preference.length : p;
     };
-    const models = free.map((m) => m.id).sort((a, b) => rank(a) - rank(b)).slice(0, VISION_CHAIN_MAX);
-    if (models.length) {
-      visionCache = { at: Date.now(), models };
-      return models;
-    }
+    const models = free.map((m) => m.id).sort((a, b) => rank(a) - rank(b)).slice(0, CHAIN_MAX);
+    if (models.length) return models;
   } catch (err) {
-    console.error(`[tutor] vision model discovery failed: ${err.message}`);
+    console.error(`[tutor] model discovery failed (requireImage=${requireImage}): ${err.message}`);
   }
-  return VISION_MODEL_FALLBACKS.slice(0, VISION_CHAIN_MAX);
+  return fallbacks.slice(0, CHAIN_MAX);
+}
+
+async function getTextModels() {
+  if (process.env.OPENROUTER_MODEL) return [process.env.OPENROUTER_MODEL];
+  if (textCache.models.length && Date.now() - textCache.at < MODEL_CACHE_MS) return textCache.models;
+  const models = await discoverFreeModels({ requireImage: false, preference: TEXT_PREFERENCE, fallbacks: TEXT_MODEL_FALLBACKS });
+  textCache = { at: Date.now(), models };
+  return models;
+}
+
+async function getVisionModels() {
+  if (process.env.OPENROUTER_VISION_MODEL) return [process.env.OPENROUTER_VISION_MODEL];
+  if (visionCache.models.length && Date.now() - visionCache.at < MODEL_CACHE_MS) return visionCache.models;
+  const models = await discoverFreeModels({ requireImage: true, preference: VISION_PREFERENCE, fallbacks: VISION_MODEL_FALLBACKS });
+  visionCache = { at: Date.now(), models };
+  return models;
 }
 const MAX_IMAGES = 4;
 const ASSETS_DIR = path.join(__dirname, "ccna3-assets");
@@ -119,7 +141,7 @@ async function handleTutor(req, res) {
     return;
   }
 
-  let models = [OPENROUTER_MODEL];
+  let models = await getTextModels();
   const imageSrcs = Array.isArray(payload.images) ? payload.images : [];
   if (imageSrcs.length) {
     const imageParts = await loadExhibitImages(imageSrcs);
