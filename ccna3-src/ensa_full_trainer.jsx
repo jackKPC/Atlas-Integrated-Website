@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useContext, createContext, useMemo } from "react";
+import { createPortal } from "react-dom";
 import DATA from "./data/ccna3-data.json";
 import SLIDES from "./data/ccna3-slides.json";
 
@@ -64,6 +65,7 @@ function useGlobalStyle() {
       .qhtml code { font-family: ${MONO}; background: ${C.dark}; padding: 2px 7px; border-radius: 5px; font-size: 0.9em; color: #5ef2c0; }
       .qhtml strong { color: ${C.magenta}; }
       .qhtml ul, .qhtml ol { margin: 6px 0 10px; padding-left: 20px; }
+      .qhtml .term-hit { border-bottom: 1.5px dotted ${C.violet}; cursor: help; font-weight: 700; border-radius: 3px; }
     `;
     document.head.appendChild(style);
   }, []);
@@ -84,6 +86,13 @@ function stripHtml(html) {
     .replace(/&#39;/g, "'")
     .replace(/\s+/g, " ")
     .trim();
+}
+function extractImgSrcs(html) {
+  const out = [];
+  const re = /<img[^>]*\ssrc\s*=\s*"([^"]+)"/gi;
+  let m;
+  while ((m = re.exec(html || ""))) out.push(m[1]);
+  return out;
 }
 
 // ══════════════════════════════════════════════════════════
@@ -442,7 +451,10 @@ function MatchQuestion({ choices, rows, locked, onCheck }) {
   };
 
   const check = () => {
-    const results = slots.map((choiceIdx, rowIdx) => choiceIdx === rows[rowIdx].answer);
+    // Compare by label, not index: some questions carry duplicate chips
+    // (e.g. two "Not used", or one layer name matching two descriptions),
+    // and either copy must count as correct.
+    const results = slots.map((choiceIdx, rowIdx) => choices[choiceIdx] === choices[rows[rowIdx].answer]);
     setChecked(results);
     onCheck(results.every(Boolean));
   };
@@ -507,10 +519,13 @@ function MatchQuestion({ choices, rows, locked, onCheck }) {
         </GButton>
       )}
 
-      {dragging && (
-        <div style={{ position: "fixed", left: dragging.x - 40, top: dragging.y - 18, pointerEvents: "none", zIndex: 999, width: 120 }}>
+      {dragging && createPortal(
+        // Portaled to <body>: an ancestor's backdrop-filter would otherwise make
+        // position:fixed resolve against the panel, offsetting the card from the cursor.
+        <div style={{ position: "fixed", left: dragging.x - 60, top: dragging.y - 18, pointerEvents: "none", zIndex: 999, width: 120 }}>
           <div style={{ ...chipStyle(dragging.idx, false), textAlign: "center", boxShadow: "0 10px 26px -8px rgba(76,29,149,.5)" }}>{chipLabel(dragging.idx)}</div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
@@ -524,7 +539,6 @@ function MatchQuestion({ choices, rows, locked, onCheck }) {
 // ══════════════════════════════════════════════════════════
 const ALL = [];
 DATA.forEach((m, mi) => m.questions.forEach((q) => ALL.push(Object.assign({ mi }, q))));
-const BOX_W = [8, 4, 2, 1];
 const BOX_NAME = ["new", "learning", "review", "mastered"];
 const BOX_COLOR = [C.dim, C.amber, C.cyan, C.ok];
 
@@ -582,23 +596,23 @@ function useTooltip() {
     return () => { document.removeEventListener("click", onDocClick, true); document.removeEventListener("keydown", onKey); };
   }, [pinnedKey]);
 
-  const show = (e, content) => { if (pinnedKey) return; anchorRect.current = e.currentTarget.getBoundingClientRect(); setTip(content); };
+  const showAt = (el, content) => { if (pinnedKey) return; anchorRect.current = el.getBoundingClientRect(); setTip(content); };
   const hide = () => { if (pinnedKey) return; setTip(null); };
+  const togglePin = (key, el, content) => {
+    if (pinnedKey === key) { setPinnedKey(null); setTip(null); return; }
+    anchorRect.current = el.getBoundingClientRect();
+    setPinnedKey(key); setTip(content);
+  };
   const triggerProps = (key, content) => ({
     tabIndex: 0,
-    onMouseEnter: (e) => show(e, content),
+    onMouseEnter: (e) => showAt(e.currentTarget, content),
     onMouseLeave: hide,
-    onFocus: (e) => show(e, content),
+    onFocus: (e) => showAt(e.currentTarget, content),
     onBlur: hide,
-    onClick: (e) => {
-      e.stopPropagation();
-      if (pinnedKey === key) { setPinnedKey(null); setTip(null); return; }
-      anchorRect.current = e.currentTarget.getBoundingClientRect();
-      setPinnedKey(key); setTip(content);
-    },
+    onClick: (e) => { e.stopPropagation(); togglePin(key, e.currentTarget, content); },
   });
 
-  return { tip, pos, pinnedKey, tipRef, triggerProps };
+  return { tip, pos, pinnedKey, tipRef, triggerProps, showAt, hide, togglePin };
 }
 
 function linkTermsNodes(text, skipAcr) {
@@ -627,6 +641,61 @@ function TermLink({ acr }) {
   const pinned = tt.pinnedKey === key;
   return (
     <span style={{ ...termLinkStyle, background: pinned ? "rgba(37,99,235,.16)" : "transparent", borderRadius: 3 }} {...tt.triggerProps(key, content)}>{acr}</span>
+  );
+}
+
+// Renders raw question HTML with every glossary term wrapped in a hoverable
+// span wired to the same tooltip engine as the study/teach views. Terms are
+// wrapped by walking the rendered DOM's text nodes (the source is an HTML
+// string, so the React-node approach in linkTermsNodes can't be used).
+function HtmlWithTerms({ html, style }) {
+  const ref = useRef(null);
+  const tt = useContext(TooltipCtx);
+  useEffect(() => {
+    if (!ref.current || !TERM_REGEX) return;
+    const walker = document.createTreeWalker(ref.current, NodeFilter.SHOW_TEXT);
+    const nodes = [];
+    while (walker.nextNode()) nodes.push(walker.currentNode);
+    nodes.forEach((node) => {
+      if (node.parentNode.classList && node.parentNode.classList.contains("term-hit")) return;
+      const text = node.nodeValue;
+      TERM_REGEX.lastIndex = 0;
+      if (!TERM_REGEX.test(text)) return;
+      const frag = document.createDocumentFragment();
+      let last = 0, m;
+      TERM_REGEX.lastIndex = 0;
+      while ((m = TERM_REGEX.exec(text))) {
+        if (m.index > last) frag.appendChild(document.createTextNode(text.slice(last, m.index)));
+        const span = document.createElement("span");
+        span.textContent = m[0];
+        span.dataset.acr = m[0];
+        span.className = "term-hit";
+        span.tabIndex = 0;
+        frag.appendChild(span);
+        last = m.index + m[0].length;
+      }
+      if (last < text.length) frag.appendChild(document.createTextNode(text.slice(last)));
+      node.parentNode.replaceChild(frag, node);
+    });
+  }, [html]);
+  if (!html) return null;
+  const contentFor = (acr) => {
+    const t = GLOSSARY.get(acr);
+    return t ? { key: "term:" + acr + ":" + t.module, content: { head: t.acronym + " — " + t.full, body: t.description, mod: "M" + t.module } } : null;
+  };
+  const acrOf = (e) => (tt && e.target.dataset ? e.target.dataset.acr : null);
+  return (
+    <div
+      ref={ref}
+      className="qhtml"
+      style={style}
+      dangerouslySetInnerHTML={{ __html: html }}
+      onMouseOver={(e) => { const a = acrOf(e); if (!a) return; const c = contentFor(a); if (c) tt.showAt(e.target, c.content); }}
+      onMouseOut={(e) => { if (acrOf(e)) tt.hide(); }}
+      onFocus={(e) => { const a = acrOf(e); if (!a) return; const c = contentFor(a); if (c) tt.showAt(e.target, c.content); }}
+      onBlur={(e) => { if (acrOf(e)) tt.hide(); }}
+      onClick={(e) => { const a = acrOf(e); if (!a) return; const c = contentFor(a); if (c) { e.stopPropagation(); tt.togglePin(c.key, e.target, c.content); } }}
+    />
   );
 }
 
@@ -690,6 +759,91 @@ function CmdRow({ cmd }) {
     >
       <CodeBlock code={cmd.command} />
       {cmd.mode && <span style={chip(C.violet)}>{cmd.mode}</span>}
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════
+//  SYNTAX PRACTICE — "Try It Yourself" slides in syntax-heavy modules.
+//  Presents a task, the student types the IOS command, and it's checked
+//  against accepted answers (whitespace/case tolerant). A wrong try gets
+//  a positional hint; a second wrong try reveals the command, which the
+//  student still has to type correctly to move on.
+// ══════════════════════════════════════════════════════════
+const normCmd = (s) => s.trim().toLowerCase().replace(/\s+/g, " ");
+
+function SyntaxPractice({ slide }) {
+  const [stepIdx, setStepIdx] = useState(0);
+  const [val, setVal] = useState("");
+  const [tries, setTries] = useState(0);
+  const [msg, setMsg] = useState(null); // { kind: 'wrong' | 'reveal', text }
+  const [doneAll, setDoneAll] = useState(false);
+  const [log, setLog] = useState([]);
+  const steps = slide.steps || [];
+  const step = steps[stepIdx];
+
+  const check = () => {
+    if (!step || doneAll || !val.trim()) return;
+    const v = normCmd(val);
+    if (step.answers.some((a) => normCmd(a) === v)) {
+      setLog((l) => l.concat([{ cli: step.cli, cmd: step.answers[0], explain: step.explain }]));
+      setVal(""); setTries(0); setMsg(null);
+      if (stepIdx + 1 >= steps.length) setDoneAll(true);
+      else setStepIdx(stepIdx + 1);
+      return;
+    }
+    const t = tries + 1;
+    setTries(t);
+    if (t >= 2) { setMsg({ kind: "reveal", text: step.answers[0] }); return; }
+    const a = normCmd(step.answers[0]).split(" "), u = v.split(" ");
+    let i = 0;
+    while (i < a.length && i < u.length && a[i] === u[i]) i++;
+    setMsg({
+      kind: "wrong",
+      text: i === 0 ? "Not quite — think about which keyword this command starts with."
+        : i === u.length && u.length < a.length ? "Good start — the command isn't finished yet."
+        : "Check word " + (i + 1) + " — everything before it is right.",
+    });
+  };
+
+  const term = { background: "#0d0b1a", border: "1px solid rgba(37,99,235,.4)", borderRadius: 12, padding: "14px 16px", fontFamily: MONO, fontSize: 13 };
+  return (
+    <div style={{ marginTop: 14 }}>
+      <div style={term}>
+        {log.map((l, i) => (
+          <div key={i} style={{ marginBottom: 10 }}>
+            <div style={{ color: "#f0eaff" }}><span style={{ color: C.cyan }}>{l.cli}</span> {l.cmd} <span style={{ color: C.ok }}>✓</span></div>
+            <div style={{ color: "#8b86a8", fontSize: 11.5, fontFamily: BODY, marginTop: 2 }}>{l.explain}</div>
+          </div>
+        ))}
+        {!doneAll && step && (
+          <div>
+            <div style={{ color: C.amber, fontFamily: BODY, fontSize: 13, marginBottom: 8 }}>▸ Task {steps.length > 1 ? (stepIdx + 1) + " of " + steps.length + ": " : ""}{step.task}</div>
+            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              <span style={{ color: C.cyan, whiteSpace: "nowrap" }}>{step.cli}</span>
+              <input
+                data-testid="syntax-input"
+                value={val}
+                onChange={(e) => { setVal(e.target.value); }}
+                onKeyDown={(e) => { if (e.key === "Enter") check(); }}
+                placeholder="type the command…"
+                autoComplete="off" autoCapitalize="off" autoCorrect="off" spellCheck={false}
+                style={{ flex: 1, background: "transparent", border: "none", borderBottom: "1.5px dotted rgba(240,234,255,.35)", outline: "none", color: "#f0eaff", fontFamily: MONO, fontSize: 13, padding: "4px 2px" }}
+              />
+              <GButton data-testid="syntax-check" variant="cyan" onClick={check} disabled={!val.trim()}>Check</GButton>
+            </div>
+            {msg && msg.kind === "wrong" && <div data-testid="syntax-wrong" style={{ color: C.bad, fontFamily: BODY, fontSize: 12.5, marginTop: 8 }}>✗ {msg.text}</div>}
+            {msg && msg.kind === "reveal" && (
+              <div data-testid="syntax-reveal" style={{ marginTop: 8, fontFamily: BODY, fontSize: 12.5, color: "#f0eaff" }}>
+                <span style={{ color: C.bad }}>✗ Here's the command: </span>
+                <code style={{ fontFamily: MONO, color: "#5ef2c0" }}>{msg.text}</code>
+                <span style={{ color: "#8b86a8" }}> — now type it yourself to lock it in.</span>
+              </div>
+            )}
+          </div>
+        )}
+        {doneAll && <div data-testid="syntax-done" style={{ color: C.ok, fontFamily: BODY, fontSize: 13.5, fontWeight: 700 }}>✓ All commands correct — this syntax is yours now.</div>}
+      </div>
     </div>
   );
 }
@@ -1078,18 +1232,29 @@ export default function ENSATrainer() {
   }, [teachMi]);
 
   const getP = (k) => prog[k] || { box: 0, wrong: 0, seen: 0 };
+  // Fresh display order for the answer options on every presentation of a
+  // question, so repeats never show A/B/C/D in the same positions. Values are
+  // original option indices — picked/correctness logic stays index-based.
+  const optOrder = useMemo(
+    () => (cur && cur.kind === "mc" ? shuffledIndices(cur.options.length) : []),
+    [cur && cur.key] // eslint-disable-line react-hooks/exhaustive-deps
+  );
   const poolFor = (sc) => sc === "all" ? ALL : sc === "weak" ? ALL.filter(q => { const p = getP(q.key); return p.wrong > 0 && p.box < 3; }) : ALL.filter(q => q.mi === sc);
 
+  // Drill order: new -> learning -> review -> mastered, random within each
+  // category. A missed question jumps this queue via inject and reappears
+  // within the next 8 cards no matter which category is being worked.
+  const category = (q) => { const p = getP(q.key); return p.seen === 0 ? 0 : p.box <= 1 ? 1 : p.box === 2 ? 2 : 3; };
   const pickNext = (sc, injList, last, ansCount) => {
     const pool = poolFor(sc);
     if (!pool.length) return null;
     for (let i = 0; i < injList.length; i++) {
       if (injList[i].due <= ansCount) { const q = pool.find(p => p.key === injList[i].key); if (q && q.key !== last) return { q, injIdx: i }; }
     }
-    let total = 0;
-    const w = pool.map(q => { if (q.key === last && pool.length > 1) return 0; const wt = BOX_W[getP(q.key).box]; total += wt; return wt; });
-    let r = Math.random() * total;
-    for (let i = 0; i < pool.length; i++) { r -= w[i]; if (r <= 0) return { q: pool[i], injIdx: -1 }; }
+    for (let c = 0; c <= 3; c++) {
+      const cand = pool.filter(q => category(q) === c && (q.key !== last || pool.length === 1));
+      if (cand.length) return { q: cand[Math.floor(Math.random() * cand.length)], injIdx: -1 };
+    }
     return { q: pool[0], injIdx: -1 };
   };
 
@@ -1100,7 +1265,7 @@ export default function ENSATrainer() {
   const recordResult = (key, isRight) => {
     const p = getP(key), np = Object.assign({}, prog);
     if (isRight) { np[key] = { box: Math.min(3, p.box + 1), wrong: p.wrong, seen: p.seen + 1 }; setCorrect(c => c + 1); setInject(inj => inj.filter(j => j.key !== key)); }
-    else { np[key] = { box: 0, wrong: p.wrong + 1, seen: p.seen + 1 }; setInject(inj => inj.filter(j => j.key !== key).concat([{ key, due: answered + 4 }])); }
+    else { np[key] = { box: 0, wrong: p.wrong + 1, seen: p.seen + 1 }; setInject(inj => inj.filter(j => j.key !== key).concat([{ key, due: answered + 2 + Math.floor(Math.random() * 7) }])); }
     setProg(np); setAnswered(a => a + 1);
   };
 
@@ -1135,7 +1300,7 @@ export default function ENSATrainer() {
   };
 
   const drillContextDesc = () => {
-    if (!cur) return "";
+    if (!cur) return null;
     let qDesc;
     if (cur.kind === "matching") {
       qDesc = "a matching exercise: " + stripHtml(cur.questionHtml) + " — " + cur.rows.map(r => r.prompt + " -> " + cur.choices[r.answer]).join("; ");
@@ -1145,21 +1310,25 @@ export default function ENSATrainer() {
       qDesc = "\"" + stripHtml(cur.questionHtml) + "\" Options: " + cur.options.map(o => stripHtml(o.html)).join(" | ") + ". Correct answer: \"" + correctText + "\".";
       if (wrongPicks.length) qDesc += " The student had chosen the wrong option(s): \"" + wrongPicks.join(", ") + "\".";
     }
-    return "Focus your teaching on the ENSA-level concept this question tests. Current practice item: " + qDesc;
+    const images = extractImgSrcs(cur.questionHtml);
+    let text = "Focus your teaching on the ENSA-level concept this question tests. Current practice item: " + qDesc;
+    if (images.length) text += " The question's exhibit image(s) are attached — read them (topology, command output, addresses) and use what they show in your explanation.";
+    return { text, images };
   };
   const studyContextDesc = (mi) => {
     const m = DATA[mi];
-    return "The student is studying Module " + m.num + " (\"" + m.title + "\"): " + m.summary + " Help them understand this module's concepts, terms, and commands.";
+    return { text: "The student is studying Module " + m.num + " (\"" + m.title + "\"): " + m.summary + " Help them understand this module's concepts, terms, and commands.", images: [] };
   };
   const teachContextDesc = (mi, slide) => {
     const m = DATA[mi];
     let d = "The student is viewing a teaching slide titled \"" + slide.title + "\" in Module " + m.num + " (\"" + m.title + "\"). Slide content: " + slide.body;
     if (slide.keyPoints && slide.keyPoints.length) d += " Key points: " + slide.keyPoints.join(" | ");
-    return d + " Help them understand this concept more deeply.";
+    if (slide.kind === "practice" && slide.steps) d += " This is a hands-on exercise where the student types IOS commands. The tasks and correct commands are: " + slide.steps.map(s => "\"" + s.task + "\" -> " + s.cli + " " + s.answers[0]).join("; ") + ". Help them understand the syntax — but if they ask for an answer outright, guide them toward it instead of just handing it over.";
+    return { text: d + " Help them understand this concept more deeply.", images: [] };
   };
 
   const callLLM = async (contextDesc, userMsg, isFirstBreakdown) => {
-    const ctx = "You are a patient CCNA3 ENSA (Enterprise Networking, Security, and Automation) tutor. The student has already mastered CCNA1 and CCNA2 fundamentals. " + contextDesc +
+    const ctx = "You are a patient CCNA3 ENSA (Enterprise Networking, Security, and Automation) tutor. The student has already mastered CCNA1 and CCNA2 fundamentals. " + contextDesc.text +
       " Answer in plain, easy English, under 180 words, no markdown or bullet symbols. Use short sentences and a tiny concrete example when it helps.";
     const messages = [];
     if (isFirstBreakdown) {
@@ -1167,11 +1336,15 @@ export default function ENSATrainer() {
     } else {
       messages.push({ role: "user", content: ctx + " The student is asking a follow-up. Prior exchange: " + convo.map(m => m.role + ": " + m.text).join(" || ") + " || Student now asks: " + userMsg });
     }
-    const res = await fetch("/api/tutor", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ messages }) });
-    if (!res.ok) throw new Error("tutor request failed");
+    const res = await fetch("/api/tutor", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ messages, images: contextDesc.images || [] }) });
+    if (!res.ok) {
+      let detail = "";
+      try { detail = (await res.json()).detail || ""; } catch (e) { /* non-JSON error body */ }
+      throw new Error(detail || "request failed (HTTP " + res.status + ")");
+    }
     const data = await res.json();
     const txt = (data.text || "").trim();
-    if (!txt) throw new Error("empty");
+    if (!txt) throw new Error("empty reply");
     return txt;
   };
 
@@ -1179,18 +1352,18 @@ export default function ENSATrainer() {
     if (deepLoading || !contextDesc) return;
     setDeepLoading(true); setDeepErr(false);
     try { const txt = await callLLM(contextDesc, null, true); setDeep(txt); setConvo([{ role: "tutor", text: txt }]); }
-    catch (e) { setDeepErr(true); }
+    catch (e) { setDeepErr(e && e.message ? e.message : true); }
     setDeepLoading(false);
   };
 
   const sendAsk = async (contextDesc) => {
     const q = ask.trim();
-    if (!q || deepLoading) return;
+    if (!q || deepLoading || !contextDesc) return;
     setDeepLoading(true); setDeepErr(false);
     const newConvo = convo.concat([{ role: "student", text: q }]);
     setConvo(newConvo); setAsk("");
     try { const txt = await callLLM(contextDesc, q, false); setConvo(newConvo.concat([{ role: "tutor", text: txt }])); if (!deep) setDeep(txt); }
-    catch (e) { setDeepErr(true); }
+    catch (e) { setDeepErr(e && e.message ? e.message : true); }
     setDeepLoading(false);
   };
 
@@ -1225,7 +1398,7 @@ export default function ENSATrainer() {
           ))}
         </div>
       )}
-      {deepErr && <div style={{ fontFamily: MONO, fontSize: 12, color: C.bad, marginBottom: 10 }}>Tutor call failed — try again.</div>}
+      {deepErr && <div style={{ fontFamily: MONO, fontSize: 12, color: C.bad, marginBottom: 10 }}>Tutor call failed — try again.{typeof deepErr === "string" && <span style={{ color: C.dim }}> [{deepErr}]</span>}</div>}
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 10 }}>
         {extraButton}
         {convo.length === 0 && <GButton variant="cyan" onClick={() => breakdown(contextDesc)} disabled={deepLoading}>{deepLoading ? "Thinking…" : (breakdownLabel || "✨ Break it down")}</GButton>}
@@ -1269,11 +1442,12 @@ export default function ENSATrainer() {
 
           <div key={slideIdx} style={{ ...panel, animation: simple ? "none" : `slide-in-${slideDir > 0 ? "r" : "l"} .4s cubic-bezier(.2,.8,.2,1)`, minHeight: 340 }}>
             <div style={{ fontFamily: HEAD, fontWeight: 700, fontSize: 12, letterSpacing: 1.5, textTransform: "uppercase", color: C.amber, marginBottom: 6 }}>
-              {slide.kind === "intro" ? "Welcome" : slide.kind === "recap" ? "Recap" : "Concept " + slideIdx}
+              {slide.kind === "intro" ? "Welcome" : slide.kind === "recap" ? "Recap" : slide.kind === "practice" ? "Try It Yourself" : "Concept " + slideIdx}
             </div>
             <h2 style={{ fontFamily: DISPLAY, fontWeight: 800, fontSize: 25, margin: "0 0 12px", ...(simple ? gradTextFlat : gradText), display: "inline-block" }}>{slide.title}</h2>
             <p style={{ fontSize: 15, lineHeight: 1.7, color: C.ink, marginBottom: (slide.diagram || (slide.keyPoints && slide.keyPoints.length)) ? 16 : 0 }}>{linkTermsNodes(slide.body)}</p>
             {slide.diagram && <TeachDiagram diagram={slide.diagram} />}
+            {slide.kind === "practice" && <SyntaxPractice slide={slide} />}
             {slide.keyPoints && slide.keyPoints.length > 0 && (
               <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 8 }}>
                 {slide.keyPoints.map((k, i) => (
@@ -1420,6 +1594,7 @@ export default function ENSATrainer() {
 
   // ── DRILL ──
   const p = getP(cur.key);
+  const curCat = category(cur);
   const scopeName = scope === "all" ? "Full course" : scope === "weak" ? "Weak spots" : DATA[scope].title;
   const isMatching = cur.kind === "matching";
   const isMulti = !isMatching && cur.type === "multiple";
@@ -1427,6 +1602,7 @@ export default function ENSATrainer() {
   const wasRight = isMatching ? !!matchDone : isMulti ? sameSet(picked, correctIndices(cur.options)) : picked.length === 1 && !!cur.options[picked[0]].correct;
 
   return (
+    <TooltipCtx.Provider value={tt}>
     <div style={page}>
       <FixedBackdrop variant="drill" />
       <ModeToggle />
@@ -1438,10 +1614,10 @@ export default function ENSATrainer() {
         <div style={{ marginLeft: "auto", fontFamily: MONO, fontSize: 12, color: C.dim }}>answered {answered} · {answered ? Math.round((correct / answered) * 100) : 0}% · mastered {masteredCount}/{ALL.length}</div>
       </div>
 
-      <div style={panel} key={cur.key}>
+      <div style={panel} key={cur.key} data-qkey={cur.key}>
         <div style={{ display: "flex", gap: 8, marginBottom: 10, alignItems: "center", flexWrap: "wrap" }}>
           <span style={{ fontFamily: MONO, fontSize: 11, color: C.violet }}>MOD {DATA[cur.mi].num} · {DATA[cur.mi].title}</span>
-          <span style={chip(BOX_COLOR[p.box])}>{BOX_NAME[p.box]}</span>
+          <span style={chip(BOX_COLOR[curCat])}>{BOX_NAME[curCat]}</span>
           {p.wrong > 0 && <span style={{ fontFamily: MONO, fontSize: 11, color: C.bad }}>missed {p.wrong}x</span>}
           {isMatching && <span style={chip(C.violet)}>drag to match</span>}
           {isMulti && <span style={chip(C.amber)}>select all correct</span>}
@@ -1452,7 +1628,8 @@ export default function ENSATrainer() {
           <MatchQuestion choices={cur.choices} rows={cur.rows} locked={matchDone !== null} onCheck={answerMatch} />
         ) : (
           <div style={{ display: "grid", gap: 8 }}>
-            {cur.options.map((opt, i) => {
+            {optOrder.map((i) => {
+              const opt = cur.options[i];
               let bd = C.line, bg = "#fff", fg = C.ink;
               const selected = picked.includes(i);
               if (mcLocked) {
@@ -1484,9 +1661,9 @@ export default function ENSATrainer() {
 
         {isDone && (
           <div style={{ marginTop: 16 }}>
-            {!wasRight && <div style={{ fontFamily: HEAD, fontWeight: 700, fontSize: 12.5, color: C.bad, marginBottom: 8, letterSpacing: .3 }}>✗ WRONG — reset to "new". This one comes back within the next few cards.</div>}
+            {!wasRight && <div style={{ fontFamily: HEAD, fontWeight: 700, fontSize: 12.5, color: C.bad, marginBottom: 8, letterSpacing: .3 }}>✗ WRONG — back to "learning". This one comes back within the next 8 cards.</div>}
             <div style={{ fontSize: 13.5, color: "#3a3550", lineHeight: 1.6, margin: "0 0 12px", background: wasRight ? "rgba(16,185,129,.06)" : "rgba(239,68,68,.06)", borderLeft: "3px solid " + (wasRight ? C.ok : C.bad), borderRadius: 8, padding: "10px 12px" }}>
-              <Html html={cur.explanationHtml} />
+              <HtmlWithTerms html={cur.explanationHtml} />
             </div>
 
             {renderTutorBox(drillContextDesc(), <GButton data-testid="next" variant="primary" onClick={next}>Next →</GButton>)}
@@ -1495,5 +1672,7 @@ export default function ENSATrainer() {
       </div>
       </div>
     </div>
+    <TooltipHost />
+    </TooltipCtx.Provider>
   );
 }
